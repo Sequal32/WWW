@@ -1,2 +1,2 @@
 language = "java10"
-run = "javac *.java -d .\\bin && cd .bin && java Main"
+run = "javac *.java -d \\bin && cd bin && java app.Main"
