@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 class SimpleUI {
-    Support support = new Support();
-    TypeVerifier verifier = new TypeVerifier(support);
+    TypeVerifier verifier = new TypeVerifier();
+    DataManager data = new DataManager();
     String helpString = String.join("\n",
         "quit - Quit Bike System",
         "help - Print Help",
@@ -22,11 +22,11 @@ class SimpleUI {
         "printt - Print Transactions",
         "printr - Print Receivables",
         "prints - Print Statements",
-        "readc filename - Read Commands From Disk File filename",
+        "readc filename - Read Commands From Disk File",
         "savebs filename - Save Bike Shop as a file of commands in file filename",
         "restorebs filename - Restore a previously saved Bike Shop from file filename"
         );
-    // Types are as follows - 0: String, 1: Int, 2: Float, 3: 
+    // Types are as follows - 0: String, 1: Int, 2: Float, 3: Brand, 4: Tier, 5:
     Map<String, int[]> typeLookup = new HashMap<String, int[]>();
 
     SimpleUI() {
@@ -37,36 +37,62 @@ class SimpleUI {
         typeLookup.put("comp", new int[]{1, 0});
     }
 
-    private void print(String s) {
+    private void println(String s) {
         System.out.println(s);
     }
 
+    private void print(String s) {
+        System.out.print(s);
+    }
+
+    private boolean wasError() {
+        boolean wasError = Support.wasError();
+        if (!wasError)
+            return false;
+        println(Support.getErrorMessage());
+        Support.clearError();
+        return wasError;
+    }
+
+    void executeCmd(Object[] args) {
+        switch((String) args[0]) {
+            case "quit":
+                println("Goodbye!");
+                break;
+            case "help":
+                println(helpString);
+                break;
+            case "addrp":
+                
+                println("Made new repair order!");
+                break;
+            case "readc":
+                break;              
+        }
+
+        wasError();
+    }
+
     void run() {
-        print("Hello! What would you like to do today?");
+        println("Hello! What would you like to do today?");
         while (true) {
             print("Command...");
             String line = System.console().readLine();
             // Verify types
-            Object[] args = support.splitStringIntoParts(line);
-            if (typeLookup.containsKey(args[0]))
-                args = verifier.getTypes((String[]) args, typeLookup.get(args[0]));
-            // Check for error
-            if (support.wasError()) {
-                print(support.getErrorMessage());
-                support.clearError();
-                continue;
-            }
+            Object[] args = Support.splitStringIntoParts(line);
+            if (typeLookup.containsKey(args[0])) {
+                int[] types = typeLookup.get(args[0]);
 
-            switch(line) {
-                case "quit":
-                    print("Goodbye!");
-                    break;
-                case "help":
-                    print(helpString);
-                    break;
-                case "addrp":
-                    break;
+                if (types.length != args.length - 1)
+                    Support.setErrorMessage("Not enough parameters.");
+                else
+                    args = verifier.getTypes((String[]) args, typeLookup.get(args[0]));
             }
+            // Check for error
+            if (wasError())
+                continue;
+
+            executeCmd(args);
         }        
     }
 }

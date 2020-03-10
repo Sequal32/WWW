@@ -8,28 +8,33 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 public class Support {
-    private String errorMessage = "";
-    private boolean wasError = false;
+    private static String errorMessage = "";
+    private static boolean wasError = false;
 
-    public String getErrorMessage() {
+    public static String getErrorMessage() {
         return errorMessage;
     }
 
-    public boolean wasError() {
+    public static boolean wasError() {
         return wasError;
     }
 
-    void clearError() {
+    static void clearError() {
         wasError = false;
         errorMessage = "";
     }
 
-    void setError(final Exception e) {
+    static void setError(final Exception e) {
         wasError = true;
         errorMessage = e.getMessage();
     }
 
-    public String readTextFile(final String file) {
+    static void setErrorMessage(final String s) {
+        wasError = true;
+        errorMessage = s;
+    }
+
+    static public String readTextFile(final String file) {
         clearError();
         BufferedReader reader;
         try {
@@ -54,7 +59,7 @@ public class Support {
         }
     }
 
-    public void writeTextFile(final String file, final String text) {
+    static public void writeTextFile(final String file, final String text) {
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "utf-8"))) {
             writer.write(text);
         } catch (Exception e) {
@@ -62,11 +67,11 @@ public class Support {
         }
     }
 
-    public String[] splitStringIntoParts(String s) {
+    static public String[] splitStringIntoParts(String s) {
         return s.split("\\s+");
     }
 
-    public String[] splitStringIntoLines(String s) {
+    static public String[] splitStringIntoLines(String s) {
         return s.split("\\r?\\n");
     }
 }

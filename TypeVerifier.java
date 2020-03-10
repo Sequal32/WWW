@@ -1,18 +1,11 @@
 package app;
 
 public class TypeVerifier {
-    Support support;
-
-    TypeVerifier(Support support) {
-        this.support = support;
-    }
-
     Integer getInt(String s) {
         try {
             return Integer.parseInt(s);
         }
         catch (Exception e) {
-            support.setError(e);
             return null;
         }
     }
@@ -22,7 +15,6 @@ public class TypeVerifier {
             return Float.parseFloat(s);
         }
         catch (Exception e) {
-            support.setError(e);
             return null;
         }
     }
@@ -39,18 +31,23 @@ public class TypeVerifier {
             switch (types[i]) {
                 case 0:
                     parsed = val;
+                    break;
                 case 1:
                     parsed = getInt(val);
                     break;
                 case 2:
                     parsed = getFloat(val);
+                    if (parsed == null)
+                        Support.setErrorMessage(String.format("%s is invalid, number expected"));
                     break;
+                // case 3:
+
+                //     break;
                 default:
                     parsed = "";
                     break;
             }
 
-            if (parsed == null) {return null;}
             output[i] = parsed;
         }
 
