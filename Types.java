@@ -6,5 +6,7 @@ public enum Types {
     Double,
     Brand,
     Tier,
-    Date
+    Date,
+    Client,
+    Order
 }

@@ -2,10 +2,11 @@ package app;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Date;
 
 class SimpleUI {
-    TypeVerifier verifier = new TypeVerifier();
     DataManager data = new DataManager();
+    TypeVerifier verifier = new TypeVerifier(data);
     String helpString = String.join("\n",
         "quit - Quit Bike System",
         "help - Print Help",
@@ -32,9 +33,9 @@ class SimpleUI {
     SimpleUI() {
         typeLookup.put("addrp", new Types[]{Types.String, Types.String, Types.Double, Types.Int});
         typeLookup.put("addc", new Types[]{Types.String, Types.String});
-        typeLookup.put("addo", new Types[]{Types.Int, Types.String, Types.String, Types.String, Types.String});
-        typeLookup.put("addp", new Types[]{Types.Int, Types.String, Types.Double});
-        typeLookup.put("comp", new Types[]{Types.Int, Types.Date});
+        typeLookup.put("addo", new Types[]{Types.Client, Types.Date, Types.Brand, Types.Tier, Types.String});
+        typeLookup.put("addp", new Types[]{Types.Client, Types.String, Types.Double});
+        typeLookup.put("comp", new Types[]{Types.Order, Types.Date});
     }
 
     private void println(String s) {
@@ -67,8 +68,14 @@ class SimpleUI {
                 println(String.format("Added %s as a new repair price!", args[1]));
                 break;
             case "addc":
+                Client newClient = new Client((String) args[1], (String) args[2]);
+                data.addClient(newClient);
+                println(String.format("Added client %s %s (ID: %d) to the database.", args[1], args[2], newClient.clientNumber));
                 break;
             case "addo":
+                Order newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], (String) args[5]);
+                data.addOrder(newOrder);
+                println(String.format("Added an order for a %s tuneup on type %s (ID: %d) to the database.", args[4], args[3], newOrder.orderNumber));
                 break;
             case "addp":
                 break;

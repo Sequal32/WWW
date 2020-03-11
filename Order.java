@@ -6,9 +6,9 @@ public class Order {
     private static int currentOrderNumber;
 
     int orderNumber;
-    long orderDate;
-    long promiseDate;
-    long completionDate;
+    Date orderDate;
+    Date promiseDate;
+    Date completionDate;
     RepairPrice repairPrice;
 
     String brand;
@@ -19,9 +19,9 @@ public class Order {
 
     boolean complete = false;
 
-    Order(Client client, String brand, String tier, String comment)  {
+    Order(Client client, Date date, String brand, String tier, String comment)  {
         this.repairPrice = Prices.getRepairPrice(brand, tier);
-        this.orderDate = new Date().getTime();
+        this.orderDate = date;
 
         this.comment = comment;
         this.brand = brand;
@@ -32,7 +32,7 @@ public class Order {
     }
 
     void markComplete() {
-        this.completionDate = new Date().getTime();
+        this.completionDate = new Date();
         this.complete = true;
     }
 }

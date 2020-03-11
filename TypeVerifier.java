@@ -1,6 +1,16 @@
 package app;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class TypeVerifier {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("MMddyy");
+
+    DataManager data;
+
+    TypeVerifier(DataManager data) {
+        this.data = data;
+    }
 
     Integer getInt(String s) {
         try {
@@ -20,6 +30,15 @@ public class TypeVerifier {
         }
     }
 
+    Date getDate(String s) {
+        try {
+            return dateFormat.parse(s);
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
     public Object[] getTypes(String[] args, Types[] types) {
         if (types == null) {return null;}
 
@@ -28,7 +47,7 @@ public class TypeVerifier {
 
         for (int i = 0; i < types.length; i++) {
             String val = args[i + 1];
-            Object parsed;
+            Object parsed = "";
 
             switch (types[i]) {
                 case String:
@@ -54,10 +73,26 @@ public class TypeVerifier {
                     if (parsed == null)
                         Support.setErrorMessage(String.format("%s is not a valid tier.", val));
                     break;
-                // case Date:
-                    // break;
-                default:
-                    parsed = "";
+                case Date:
+                    parsed = getDate(val);
+                    if (parsed == null)
+                        Support.setErrorMessage(String.format("%s is not a valid date, the format is %s.", val, dateFormat.toPattern()));
+                    break;
+                case Client:
+                    Integer clientNumber = getInt(val);
+                    if (clientNumber == null)
+                        {Support.setErrorMessage("Not a valid client number."); break;}
+                    parsed = data.getClient(clientNumber);
+                    if (parsed == null) 
+                        Support.setErrorMessage("Client does not exist in the database!");
+                    break;
+                case Order:
+                    Integer orderNumber = getInt(val);
+                    if (orderNumber == null)
+                        {Support.setErrorMessage("Not a valid order number."); break;}
+                    parsed = data.getOrder(orderNumber);
+                    if (parsed == null) 
+                        Support.setErrorMessage("Order does not exist in the database!");
                     break;
             }
 

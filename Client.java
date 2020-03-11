@@ -1,13 +1,14 @@
 package app;
 public class Client{
-  int clientNumber;
-  String firstName = "";
-  String lastName = "";
+    private static int currentClientNumber;
 
-  public Client(int clientNumber, String firstName, String lastName){
-        this.clientNumber = clientNumber;
+    int clientNumber;
+    String firstName;
+    String lastName;
+
+    public Client(String firstName, String lastName){
+        this.clientNumber = ++currentClientNumber;
         this.firstName = firstName;
         this.lastName = lastName;
     }
-
 }

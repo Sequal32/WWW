@@ -1,11 +1,15 @@
 package app;
 
 public class Payment{
-  Client client;
-  double amount;
-  long paymentDate;
+    private static int currentPaymentNumber = 0;
 
-  public Payment(Client client, double amount, long paymentDate){
+    Client client;
+    double amount;
+    long paymentDate;
+    int paymentNumber;
+
+    public Payment(Client client, double amount, long paymentDate) {
+        this.paymentNumber = ++currentPaymentNumber;
         this.client = client;
         this.amount = amount;
         this.paymentDate = paymentDate;

@@ -1,17 +1,15 @@
 package app;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 class DataManager {
     ArrayList<String> commandLog = new ArrayList<String>();
 
-    ArrayList<Order> orders = new ArrayList<Order>();
-    ArrayList<Client> clients = new ArrayList<Client>();
-    ArrayList<Payment> payments = new ArrayList<Payment>();
-
-    HashMap<Integer, Client> clientLookup = new HashMap<Integer, Client>();
-    HashMap<Integer, Order> orderLookup = new HashMap<Integer, Order>();
+    HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
+    HashMap<Integer, Order> orders = new HashMap<Integer, Order>();
+    HashMap<Integer, Payment> payments = new HashMap<Integer, Payment>();
 
     String[] fetchStore(String s) {
         return Support.readTextFile(s.trim().concat(".txt")).split("\n");
@@ -55,22 +53,38 @@ class DataManager {
 
     // Manage the data
     void addOrder(Order order) {
-        orders.add(order);
+        orders.put(order.orderNumber, order);
     }
 
     void addClient(Client client) {
-        clients.add(client);
+        clients.put(client.clientNumber, client);
     }
 
     void addPayment(Payment payment) {
-        payments.add(payment);
+        payments.put(payment.paymentNumber, payment);
     }
 
     Order getOrder(int orderId) {
-        return orderLookup.get(orderId);
+        return orders.get(orderId);
     }
 
-    Order getClient(int clientId) {
-        return orderLookup.get(clientId);
+    Client getClient(int clientId) {
+        return clients.get(clientId);
+    }
+
+    Payment getPayment(int paymentId) {
+        return payments.get(paymentId);
+    }
+
+    Collection<Order> getAllOrders() {
+        return orders.values();
+    }
+
+    Collection<Client> getAllClients() {
+        return clients.values();
+    }
+
+    Collection<Payment> getAllPayments() {
+        return payments.values();
     }
 }
