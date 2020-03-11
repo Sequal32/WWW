@@ -1,6 +1,7 @@
 package app;
 
 public class TypeVerifier {
+
     Integer getInt(String s) {
         try {
             return Integer.parseInt(s);
@@ -10,47 +11,61 @@ public class TypeVerifier {
         }
     }
 
-    Float getFloat(String s) {
+    Double getDouble(String s) {
         try {
-            return Float.parseFloat(s);
+            return Double.parseDouble(s);
         }
         catch (Exception e) {
             return null;
         }
     }
 
-    public Object[] getTypes(String[] args, int[] types) {
+    public Object[] getTypes(String[] args, Types[] types) {
         if (types == null) {return null;}
 
         Object[] output = new Object[args.length];
+        output[0] = args[0];
 
-        for (int i = 0; i < types.length - 1; i++) {
+        for (int i = 0; i < types.length; i++) {
             String val = args[i + 1];
             Object parsed;
 
             switch (types[i]) {
-                case 0:
+                case String:
                     parsed = val;
                     break;
-                case 1:
+                case Int:
                     parsed = getInt(val);
-                    break;
-                case 2:
-                    parsed = getFloat(val);
                     if (parsed == null)
-                        Support.setErrorMessage(String.format("%s is invalid, number expected"));
+                        Support.setErrorMessage(String.format("%s is invalid, integer expected", val));
                     break;
-                // case 3:
-
-                //     break;
+                case Double:
+                    parsed = getDouble(val);
+                    if (parsed == null)
+                        Support.setErrorMessage(String.format("%s is invalid, number expected", val));
+                    break;
+                case Brand:
+                    parsed = Prices.brandExists(val) ? val : null;
+                    if (parsed == null)
+                        Support.setErrorMessage(String.format("%s is not a valid brand.", val));
+                    break;
+                case Tier:
+                    parsed = Prices.tierExists(val) ? val : null;
+                    if (parsed == null)
+                        Support.setErrorMessage(String.format("%s is not a valid tier.", val));
+                    break;
+                // case Date:
+                    // break;
                 default:
                     parsed = "";
                     break;
             }
 
-            output[i] = parsed;
-        }
+            if (Support.wasError())
+                return null;
 
+            output[i + 1] = parsed;
+        }
         return output;
     }
 }

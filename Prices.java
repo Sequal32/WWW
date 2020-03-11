@@ -6,24 +6,41 @@ import java.util.HashMap;
  * Prices
  */
 public class Prices {
-    static HashMap<String, Price> brands = new HashMap<String, Price>();
-    static ArrayList<String> tiers = new ArrayList<String>();
+    static ArrayList<RepairPrice> rps = new ArrayList<RepairPrice>();
+    static HashMap<String, Boolean> tiers = new HashMap<String, Boolean>();
+    static HashMap<String, Boolean> brands = new HashMap<String, Boolean>();
 
-    static void addBrand(String brand) {
-        Price newBrand = new Price(brand);
-        brands.put(brand, newBrand);
+    static void addRepairPrice(String brand, String tier, double price, int days) {
+        rps.add(new RepairPrice(brand, tier, price, days));
+        brands.put(brand, true);
+        tiers.put(tier, true);
     }
 
-    static void addPriceToTier(String brand, String tier, int price) {
-        if (!brands.containsKey(brand))
+    static RepairPrice findRepairPrice(String brand, String tier) {
+        for (int i = 0; i < rps.size(); i++) {
+            RepairPrice repairPrice = rps.get(i);
+            if (repairPrice.brand == brand && repairPrice.tier == tier)
+                return repairPrice;
+        }
+        return null;
+    }
+
+    static void removeRepairPrice(String brand, String tier) {
+        RepairPrice repairPrice = findRepairPrice(brand, tier);
+        if (repairPrice == null)
             return;
-        brands.get(brand).addPrice(tier, price);
-        tiers.add(tier);
+        rps.remove(repairPrice);
     }
 
-    static Integer getPrice(String brand, String tier) {
-        if (!brands.containsKey(brand))
-            return null;
-        return brands.get(brand).getPrice(tier);
+    static RepairPrice getRepairPrice(String brand, String tier) {
+        return findRepairPrice(brand, tier);
+    }
+
+    static boolean brandExists(String brand) {
+        return brands.containsKey(brand);
+    }
+
+    static boolean tierExists(String tier) {
+        return tiers.containsKey(tier);
     }
 }

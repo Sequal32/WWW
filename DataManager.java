@@ -14,7 +14,7 @@ class DataManager {
     HashMap<Integer, Order> orderLookup = new HashMap<Integer, Order>();
 
     String[] fetchStore(String s) {
-        return Support.readTextFile(s.concat(".txt")).split("\n");
+        return Support.readTextFile(s.trim().concat(".txt")).split("\n");
     }
 
     void loadStore(String s) {
@@ -22,10 +22,31 @@ class DataManager {
         for (String cmd : fetchStore(s)) {
             commandLog.add(cmd);
         }
+        saveLastStore(s);
+    }
+
+    void loadDefaultStore() {
+        loadStore("default");
+    }
+    
+    void loadLastStore() {
+        loadStore(Support.readTextFile("laststore.txt"));
+    }
+
+    void startup() {
+        if (Support.fileExists("laststore.txt"))
+            loadLastStore();
+        else
+            loadDefaultStore();
+    }
+
+    void saveLastStore(String s) {
+        Support.writeTextFile("laststore.txt", s);
     }
 
     void saveStore(String s) {
         Support.writeTextFile(s.concat(".txt"), String.join("\n", commandLog));
+        saveLastStore(s);
     }
 
     void addCommand(String s) {

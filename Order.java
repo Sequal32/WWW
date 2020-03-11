@@ -9,7 +9,7 @@ public class Order {
     long orderDate;
     long promiseDate;
     long completionDate;
-    int repairPrice;
+    RepairPrice repairPrice;
 
     String brand;
     String tier;
@@ -20,7 +20,7 @@ public class Order {
     boolean complete = false;
 
     Order(Client client, String brand, String tier, String comment)  {
-        this.repairPrice = Prices.getPrice(brand, tier);
+        this.repairPrice = Prices.getRepairPrice(brand, tier);
         this.orderDate = new Date().getTime();
 
         this.comment = comment;

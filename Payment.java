@@ -1,7 +1,13 @@
 package app;
 
 public class Payment{
-//   Customer c = new Customer(8, "Fred", "Jones");
+  Client client;
   double amount;
-  
+  long paymentDate;
+
+  public Payment(Client client, double amount, long paymentDate){
+        this.client = client;
+        this.amount = amount;
+        this.paymentDate = paymentDate;
+    }
 }
