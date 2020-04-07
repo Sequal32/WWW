@@ -1,14 +1,16 @@
 package app;
 
-public class Payment{
+import java.util.Date;
+
+public class Payment {
     private static int currentPaymentNumber = 0;
 
     Client client;
     double amount;
-    long paymentDate;
+    Date paymentDate;
     int paymentNumber;
 
-    public Payment(Client client, double amount, long paymentDate) {
+    public Payment(Client client, double amount, Date paymentDate) {
         this.paymentNumber = ++currentPaymentNumber;
         this.client = client;
         this.amount = amount;

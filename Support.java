@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.function.Function;
 
 public class Support {
     private static String errorMessage = "";
@@ -114,11 +115,27 @@ public class Support {
         return maxSize;
     }
 
+    static public int getLongestStringSizeGeneric(Collection<?> array, Function<Object, Integer> getLength) {
+        int maxSize = -1;
+        for (Object object : array) {
+            int length = getLength.apply(object);
+            if (length > maxSize) {
+                maxSize = length;
+            }
+        }
+
+        return maxSize;
+    }
+
     static public String getEmptySpaces(int count) {
         String result = "";
         for (int i = 0; i < count; i++) {
             result += " ";
         }
         return result;
+    }
+
+    static public String capitalizeFirstLetter(String string) {
+        return string.substring(0, 1).toUpperCase() + string.substring(1);
     }
 }
