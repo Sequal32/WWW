@@ -1,19 +1,14 @@
 package app;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
 class SimpleUI {
     boolean runQuiet = false;
-
+    final int PAGE_SIZE = 10;
 
     SimpleDateFormat printingFormat = new SimpleDateFormat("MM/dd/yyyy");
     DataManager data = new DataManager();
@@ -59,6 +54,15 @@ class SimpleUI {
         return wasError;
     }
 
+    private String readLine() {
+        return System.console().readLine();
+    }
+
+    private boolean promptNextPage() {
+        String result = readLine();
+        return result.strip().equals("");
+    }
+
     private boolean executeCmd(Object[] args) {
         switch ((String) args[0]) {
             case "quit":
@@ -99,26 +103,45 @@ class SimpleUI {
                         order.client.firstName, order.tier, order.brand, order.orderNumber,
                         printingFormat.format(order.completionDate)));
                 break;
-            case "printo":
+            case "printo": {
                 Collection<Order> orders = data.getAllOrders();
+
+                if (orders.size() == 0) {println("No orders found."); break;}
+
                 final int maxSizeBrand = Support.getLongestStringSizeGeneric(orders, x -> ((Order) x).brand.length());
                 final int maxSizeTier = Support.getLongestStringSizeGeneric(orders, x -> ((Order) x).tier.length());
                 final int maxSizeName = Support.getLongestStringSizeGeneric(orders, x -> ((Order) x).client.fullName.length());
-                
+
+                println(String.format("%s\t%s\t%s\t%s\tClient ID\tprice", Support.fit("brands", maxSizeBrand, true), Support.fit("tier", maxSizeTier, true), Support.fit("Client Name", maxSizeName, true)));
+
+                int count = 0;
+                for (Order o : orders) {
+                    println(String.format("%s\t%s\t%s\t%.2f", Support.fit(o.brand, maxSizeBrand, true), Support.fit(o.tier, maxSizeTier, true), Support.fit(o.client.fullName, maxSizeTier, true), o.repairPrice));
+                    if (count % PAGE_SIZE == 0) if (!promptNextPage()) break;
+                    count++;
+                }
                 
                 break;
+            }
             case "printcname":
                 break;
             case "printcnum":
                 break;
-            case "printrp":
+            case "printrp": {
+                if (Prices.rps.size() == 0) {println("No orders found."); break;}
+
                 final int maxSizeBrand = Support.getLongestStringSize(Prices.brands.keySet());
                 final int maxSizeTier = Support.getLongestStringSize(Prices.tiers.keySet());
                 println(String.format("%s\t%s\tprice", Support.fit("brands", maxSizeBrand, true), Support.fit("tier", maxSizeTier, true)));
+
+                int count = 1;
                 for (RepairPrice rp : Prices.rps) {
+                    count++;
                     println(String.format("%s\t%s\t%.2f", Support.fit(rp.brand, maxSizeBrand, true), Support.fit(rp.tier, maxSizeTier, true), rp.price));
+                    if (count % PAGE_SIZE == 0) if (!promptNextPage()) break;
                 }
                 break;
+            }
             case "printp":
                 break;
             case "printt":
@@ -128,10 +151,20 @@ class SimpleUI {
             case "prints":
                 break;
             case "readc":
+                if (!data.loadStore((String) args[0], false)) {
+                    println("Invalid file name!");
+                }
                 break;
-            case "savebs":
+            case "savebs": {
+                String storeName = (String) args[0];
+                data.saveStore(storeName);
+                println(String.format("Shop successfully saved as '%s'!", storeName));
                 break;
+            }
             case "restorebs":
+                if (!data.loadStore((String) args[0], true)) {
+                    println("Invalid shop name!");
+                }
                 break;              
         }
 
@@ -139,18 +172,21 @@ class SimpleUI {
     }
 
     void run() {
+        // Avoid printing initial data to the console
+        runQuiet = true;
         // Load data & execute commands
         data.startup();
         for (String command : data.commandLog) {
             String[] parts = Support.splitStringIntoParts(command);
             executeCmd(verifier.getTypes(parts, typeLookup.get(parts[0])));
         }
+        runQuiet = false;
 
         println("Hello! What would you like to do today?");
 
         while (true) {
             print("Command...");
-            String line = System.console().readLine();
+            String line = readLine();
             // Verify types
             Object[] args = Support.splitStringIntoParts(line);
             if (typeLookup.containsKey(args[0])) {
