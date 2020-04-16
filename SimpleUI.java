@@ -5,6 +5,7 @@ import java.util.Map;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.lang.Math;
 
 class SimpleUI {
     boolean runQuiet = false;
@@ -58,9 +59,14 @@ class SimpleUI {
         return System.console().readLine();
     }
 
-    private boolean promptNextPage() {
+    private boolean promptNextPage(int currentElements, int pageCount) {
+        println(String.format("\nPage %d/%d\t[q] to quit [enter] next page", calculatePageCount(currentElements), pageCount + 1));
         String result = readLine();
         return result.strip().equals("");
+    }
+
+    private int calculatePageCount(int elements) {
+        return (int) Math.ceil((double)elements/PAGE_SIZE);
     }
 
     private boolean executeCmd(Object[] args) {
@@ -115,9 +121,10 @@ class SimpleUI {
                 println(String.format("%s\t%s\t%s\t%s\tClient ID\tprice", Support.fit("brands", maxSizeBrand, true), Support.fit("tier", maxSizeTier, true), Support.fit("Client Name", maxSizeName, true)));
 
                 int count = 0;
+                int pageCount = calculatePageCount(orders.size());
                 for (Order o : orders) {
                     println(String.format("%s\t%s\t%s\t%.2f", Support.fit(o.brand, maxSizeBrand, true), Support.fit(o.tier, maxSizeTier, true), Support.fit(o.client.fullName, maxSizeTier, true), o.repairPrice));
-                    if (count % PAGE_SIZE == 0) if (!promptNextPage()) break;
+                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                     count++;
                 }
                 
@@ -135,10 +142,11 @@ class SimpleUI {
                 println(String.format("%s\t%s\tprice", Support.fit("brands", maxSizeBrand, true), Support.fit("tier", maxSizeTier, true)));
 
                 int count = 1;
+                int pageCount = calculatePageCount(Prices.rps.size());
                 for (RepairPrice rp : Prices.rps) {
                     count++;
                     println(String.format("%s\t%s\t%.2f", Support.fit(rp.brand, maxSizeBrand, true), Support.fit(rp.tier, maxSizeTier, true), rp.price));
-                    if (count % PAGE_SIZE == 0) if (!promptNextPage()) break;
+                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                 }
                 break;
             }
