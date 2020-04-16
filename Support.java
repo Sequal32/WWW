@@ -7,12 +7,29 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.function.Function;
 
 public class Support {
     private static String errorMessage = "";
     private static boolean wasError = false;
+
+    static SimpleDateFormat dateFormat = new SimpleDateFormat("MMddyy");
+
+    public static Date getDate(String s) {
+        try {
+            return dateFormat.parse(s);
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String dateToString(Date d) {
+        return dateFormat.format(d);
+    }
 
     public static String getErrorMessage() {
         return errorMessage;
@@ -82,7 +99,7 @@ public class Support {
         return s.split("\\r?\\n");
     }
 
-    static public String fit(String s, int size, boolean right) {
+    static public String fit(String s, int size) {
         String result = "";
         int sSize = s.length();
         if (sSize == size) {
@@ -97,10 +114,7 @@ public class Support {
         for (int i = 0; i < num; i++) {
             addon += " ";
         }
-        if (right) {
-            return result + addon;
-        }
-        return addon + result;
+        return result + addon;
     }
 
     static public int getLongestStringSize(Collection<String> array) {

@@ -1,6 +1,6 @@
 package app;
 public class Client{
-    private static int currentClientNumber;
+    static int currentClientNumber = 0;
 
     int clientNumber;
     String firstName;
@@ -12,5 +12,13 @@ public class Client{
         this.firstName = firstName;
         this.lastName = lastName;
         this.fullName = this.firstName + " " + this.lastName;
+    }
+
+    public int getId() {
+        return clientNumber;
+    }
+
+    public String getName() {
+        return fullName;
     }
 }

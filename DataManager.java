@@ -2,7 +2,10 @@ package app;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 class DataManager {
     ArrayList<String> commandLog = new ArrayList<String>();
@@ -11,6 +14,22 @@ class DataManager {
     HashMap<Integer, Order> orders = new HashMap<Integer, Order>();
     HashMap<Integer, Payment> payments = new HashMap<Integer, Payment>();
 
+    // String sizes for support fit
+    int clientNumberSize = 0;
+    int clientNameSize = 0;
+
+    int orderNumberSize = 0;
+    
+    int brandSize = 0;
+    int tierSize = 0;
+    int repairPriceSize = 0;
+    
+    int paymentNumberSize = 0;
+    int paymentAmountSize = 0;
+
+    DataManager() {
+        clearData();
+    }
 
     void clearData() {
         clients = new HashMap<Integer, Client>();
@@ -72,21 +91,55 @@ class DataManager {
         commandLog.add(s);
     }
 
+    int getDigits(int x) {
+        return Math.max((int) (Math.log10(x) + 1), 2);
+    }
+
     // Manage the data
     void addOrder(Order order) {
         orders.put(order.orderNumber, order);
+        orderNumberSize = Math.max(orderNumberSize, order.orderNumber);
     }
 
     void addClient(Client client) {
         clients.put(client.clientNumber, client);
+        clientNumberSize = Math.max(clientNumberSize, getDigits(client.clientNumber));
+        clientNameSize = Math.max(clientNameSize, client.fullName.length());
     }
 
     void addPayment(Payment payment) {
         payments.put(payment.paymentNumber, payment);
+        paymentNumberSize = Math.max(paymentNumberSize, getDigits(payment.paymentNumber));
+        paymentAmountSize = Math.max(paymentAmountSize, getDigits((int) payment.amount));
+    }
+
+    void addRepairPrice(RepairPrice rp) {
+        Prices.addRepairPrice(rp);
+        brandSize = Math.max(brandSize, rp.brand.length());
+        tierSize = Math.max(tierSize, rp.tier.length());
+        repairPriceSize = Math.max(repairPriceSize, getDigits((int) rp.price));
     }
 
     Order getOrder(int orderId) {
         return orders.get(orderId);
+    }
+
+    Collection<Client> getClientsById() {
+        List<Client> clientsSorted = new ArrayList<Client>(clients.values());
+        Collections.sort(clientsSorted, Comparator.comparing(Client::getId));
+        return clientsSorted;
+    }
+
+    Collection<Client> getClientsByName() {
+        List<Client> clientsSorted = new ArrayList<Client>(clients.values());
+        Collections.sort(clientsSorted, Comparator.comparing(Client::getName));
+        return clientsSorted;
+    }
+
+    Collection<Payment> getPaymentsByDate() {
+        List<Payment> paymentsSorted = new ArrayList<Payment>(payments.values());
+        Collections.sort(paymentsSorted, Comparator.comparing(Payment::getDate));
+        return paymentsSorted;
     }
 
     Client getClient(int clientId) {

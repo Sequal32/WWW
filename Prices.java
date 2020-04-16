@@ -2,18 +2,19 @@ package app;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 /**
  * Prices
  */
 public class Prices {
     static ArrayList<RepairPrice> rps = new ArrayList<RepairPrice>();
-    static HashMap<String, Boolean> tiers = new HashMap<String, Boolean>();
-    static HashMap<String, Boolean> brands = new HashMap<String, Boolean>();
+    static HashSet<String> tiers = new HashSet<String>();
+    static HashSet<String> brands = new HashSet<String>();
 
-    static void addRepairPrice(String brand, String tier, double price, int days) {
-        rps.add(new RepairPrice(brand, tier, price, days));
-        brands.put(brand, true);
-        tiers.put(tier, true);
+    static void addRepairPrice(RepairPrice rp) {
+        rps.add(rp);
+        brands.add(rp.brand);
+        tiers.add(rp.tier);
     }
 
     static RepairPrice findRepairPrice(String brand, String tier) {
@@ -37,10 +38,10 @@ public class Prices {
     }
 
     static boolean brandExists(String brand) {
-        return brands.containsKey(brand);
+        return brands.contains(brand);
     }
 
     static boolean tierExists(String tier) {
-        return tiers.containsKey(tier);
+        return tiers.contains(tier);
     }
 }

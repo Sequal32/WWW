@@ -30,14 +30,6 @@ public class TypeVerifier {
         }
     }
 
-    Date getDate(String s) {
-        try {
-            return dateFormat.parse(s);
-        }
-        catch (Exception e) {
-            return null;
-        }
-    }
 
     public Object[] getTypes(String[] args, Types[] types) {
         if (types == null) {return null;}
@@ -74,7 +66,7 @@ public class TypeVerifier {
                         Support.setErrorMessage(String.format("%s is not a valid tier.", val));
                     break;
                 case Date:
-                    parsed = getDate(val);
+                    parsed = Support.getDate(val);
                     if (parsed == null)
                         Support.setErrorMessage(String.format("%s is not a valid date, the format is %s.", val, dateFormat.toPattern()));
                     break;

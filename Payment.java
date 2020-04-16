@@ -3,7 +3,7 @@ package app;
 import java.util.Date;
 
 public class Payment {
-    private static int currentPaymentNumber = 0;
+    static int currentPaymentNumber = 0;
 
     Client client;
     double amount;
@@ -15,5 +15,9 @@ public class Payment {
         this.client = client;
         this.amount = amount;
         this.paymentDate = paymentDate;
+    }
+
+    public Date getDate() {
+        return paymentDate;
     }
 }

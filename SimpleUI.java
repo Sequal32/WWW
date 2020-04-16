@@ -69,6 +69,20 @@ class SimpleUI {
         return (int) Math.ceil((double)elements/PAGE_SIZE);
     }
 
+    private void printClients(Collection<Client> clients) {
+        final int maxSizeNumber = Math.max((int) (Math.log10(Client.currentClientNumber) + 1), 2);
+
+        println(String.format("%s\t%s", Support.fit("ID", maxSizeNumber), "Name"));
+
+        int count = 1;
+        int pageCount = calculatePageCount(data.clients.size());
+        for (Client client : clients) {
+            count++;
+            println(String.format("%s\t%s", Support.fit(String.valueOf(client.clientNumber), maxSizeNumber), client.fullName));
+            if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
+        }
+    }
+
     private boolean executeCmd(Object[] args) {
         switch ((String) args[0]) {
             case "quit":
@@ -78,7 +92,7 @@ class SimpleUI {
                 println(helpString);
                 break;
             case "addrp":
-                Prices.addRepairPrice((String) args[1], (String) args[2], (double) args[3], (int) args[4]);
+                data.addRepairPrice(new RepairPrice((String) args[1], (String) args[2], (double) args[3], (int) args[4]));
                 println(String.format("Added %s as a new repair price!", args[1]));
                 break;
             case "addc":
@@ -110,20 +124,16 @@ class SimpleUI {
                         printingFormat.format(order.completionDate)));
                 break;
             case "printo": {
+                if (data.orders.size() == 0) {println("No orders found."); break;}
+
                 Collection<Order> orders = data.getAllOrders();
 
-                if (orders.size() == 0) {println("No orders found."); break;}
-
-                final int maxSizeBrand = Support.getLongestStringSizeGeneric(orders, x -> ((Order) x).brand.length());
-                final int maxSizeTier = Support.getLongestStringSizeGeneric(orders, x -> ((Order) x).tier.length());
-                final int maxSizeName = Support.getLongestStringSizeGeneric(orders, x -> ((Order) x).client.fullName.length());
-
-                println(String.format("%s\t%s\t%s\t%s\tClient ID\tprice", Support.fit("brands", maxSizeBrand, true), Support.fit("tier", maxSizeTier, true), Support.fit("Client Name", maxSizeName, true)));
+                println(String.format("%s\t%s\t%s\t%s\tClient ID\tprice", Support.fit("brands", data.brandSize), Support.fit("tier", data.tierSize), Support.fit("Client Name", data.clientNameSize)));
 
                 int count = 0;
                 int pageCount = calculatePageCount(orders.size());
                 for (Order o : orders) {
-                    println(String.format("%s\t%s\t%s\t%.2f", Support.fit(o.brand, maxSizeBrand, true), Support.fit(o.tier, maxSizeTier, true), Support.fit(o.client.fullName, maxSizeTier, true), o.repairPrice));
+                    println(String.format("%s\t%s\t%s\t%.2f", Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.brandSize), Support.fit(o.client.fullName, data.tierSize), o.repairPrice));
                     if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                     count++;
                 }
@@ -131,26 +141,40 @@ class SimpleUI {
                 break;
             }
             case "printcname":
+                if (data.clients.size() == 0) {println("No clients found."); break;}
+                printClients(data.getClientsByName());
                 break;
             case "printcnum":
+                if (data.clients.size() == 0) {println("No clients found."); break;}
+                printClients(data.getClientsById());
                 break;
             case "printrp": {
                 if (Prices.rps.size() == 0) {println("No orders found."); break;}
 
-                final int maxSizeBrand = Support.getLongestStringSize(Prices.brands.keySet());
-                final int maxSizeTier = Support.getLongestStringSize(Prices.tiers.keySet());
-                println(String.format("%s\t%s\tprice", Support.fit("brands", maxSizeBrand, true), Support.fit("tier", maxSizeTier, true)));
+                println(String.format("%s\t%s\tprice", Support.fit("brands", data.brandSize), Support.fit("tier", data.tierSize)));
 
                 int count = 1;
                 int pageCount = calculatePageCount(Prices.rps.size());
                 for (RepairPrice rp : Prices.rps) {
                     count++;
-                    println(String.format("%s\t%s\t%.2f", Support.fit(rp.brand, maxSizeBrand, true), Support.fit(rp.tier, maxSizeTier, true), rp.price));
+                    println(String.format("%s\t%s\t%.2f", Support.fit(rp.brand, data.brandSize), Support.fit(rp.tier, data.tierSize), rp.price));
                     if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                 }
                 break;
             }
             case "printp":
+                if (data.payments.size() == 0) {println("No payments found."); break;}
+
+                println(String.format("%s\t%s\t%s\tprice", Support.fit("id", data.paymentNumberSize), Support.fit("cid", data.clientNumberSize), Support.fit("price", data.paymentAmountSize)));
+
+                int count = 1;
+                int pageCount = calculatePageCount(data.payments.size());
+                for (Payment p : data.getAllPayments()) {
+                    count++;
+                    println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.paymentNumber), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber, data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.dateToString(p.paymentDate))));
+                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;                  
+                }
+
                 break;
             case "printt":
                 break;
