@@ -6,13 +6,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 
 class DataManager {
     ArrayList<String> commandLog = new ArrayList<String>();
 
-    HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
-    HashMap<Integer, Order> orders = new HashMap<Integer, Order>();
-    HashMap<Integer, Payment> payments = new HashMap<Integer, Payment>();
+    HashMap<Integer, Client> clients;
+    HashMap<Integer, Order> orders;
+    HashMap<Integer, Payment> payments;
+    TreeSet<Transaction> transactions;
 
     // String sizes for support fit
     int clientNumberSize = 0;
@@ -35,6 +37,7 @@ class DataManager {
         clients = new HashMap<Integer, Client>();
         orders = new HashMap<Integer, Order>();
         payments = new HashMap<Integer, Payment>();
+        transactions = new TreeSet<Transaction>();
     }
 
     private String prepareName(String s) {
@@ -128,6 +131,14 @@ class DataManager {
         List<Client> clientsSorted = new ArrayList<Client>(clients.values());
         Collections.sort(clientsSorted, Comparator.comparing(Client::getId));
         return clientsSorted;
+    }
+
+    Collection<Transaction> getTransactionsByDate() {
+        List<Transaction> transactions = new ArrayList<Transaction>();
+        transactions.addAll(orders.values());
+        transactions.addAll(payments.values());
+        Collections.sort(transactions, Comparator.comparing(Transaction::getDate));
+        return transactions;
     }
 
     Collection<Client> getClientsByName() {

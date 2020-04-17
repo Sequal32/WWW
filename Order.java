@@ -2,11 +2,10 @@ package app;
 
 import java.util.Date;
 
-public class Order {
+public class Order extends Transaction {
     private static int currentOrderNumber;
 
     int orderNumber;
-    Date orderDate;
     Date promiseDate;
     Date completionDate;
     RepairPrice repairPrice;
@@ -15,20 +14,20 @@ public class Order {
     String tier;
     String comment;
 
-    Client client;
-
     boolean complete = false;
 
-    Order(Client client, Date date, String brand, String tier, String comment)  {
+    Order(Client client, Date orderDate, String brand, String tier, String comment)  {
         this.repairPrice = Prices.getRepairPrice(brand, tier);
-        this.orderDate = date;
 
         this.comment = comment;
         this.brand = brand;
         this.tier = tier;
         this.client = client;
+        this.date = orderDate;
 
         this.orderNumber = ++currentOrderNumber;
+
+        this.transactionAmount = this.repairPrice.price;
     }
 
     void markComplete() {

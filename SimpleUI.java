@@ -83,6 +83,33 @@ class SimpleUI {
         }
     }
 
+    // Analysis reports
+    private void printStatement(Client c) {
+        StringBuilder desc = new StringBuilder();
+        desc.append(String.format("STATEMENT FOR %s\n", c.fullName));
+
+        for (Order order : c.orders) {
+            desc.append(String.format("+%.2f\t%s TIER %s TUNEUP\n", order.transactionAmount, order.tier, order.brand));
+        }
+        for (Payment payment : c.payments) {
+            desc.append(String.format("-%.2f\tPAID\n", payment.amount));
+        }
+        desc.append(String.format("TOTAL: %+.2f", c.outstandingAmount));
+        println(desc.toString());
+    }
+
+    private void printTransactions() {
+        StringBuilder desc = new StringBuilder();
+        println(String.format("%s\t%10s\t%10s\t%s", Support.fit("CID", data.clientNumberSize), "TYPE", "DATE", Support.fit("AMOUNT", data.paymentAmountSize)));
+
+        for (Transaction transaction : data.getTransactionsByDate()) {
+            String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
+            println(String.format("%s\t%10s\t%10s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), type, Support.dateToString(transaction.date), Support.fit(String.valueOf(transaction.transactionAmount), data.paymentAmountSize)));
+        }
+
+        println(desc.toString());
+    }
+
     private boolean executeCmd(Object[] args) {
         switch ((String) args[0]) {
             case "quit":
@@ -109,12 +136,13 @@ class SimpleUI {
                 println(String.format("Added an order for a %s tuneup on type %s (ID: %d) to the database.", args[4],
                         args[3], newOrder.orderNumber));
                 break;
-            case "addp":
+            case "addp": {
                 Client client = (Client) args[1];
                 Payment newPayment = new Payment(client, (Double) args[2], (Date) args[3]);
                 data.addPayment(newPayment);
                 println(String.format("Added a $%.2f payment (ID: %d) for %s %s (ID: %d)", args[2],
                         newPayment.paymentNumber, client.firstName, client.lastName, client.clientNumber));
+            }
                 break;
             case "comp":
                 Order order = (Order) args[1];
@@ -162,25 +190,42 @@ class SimpleUI {
                 }
                 break;
             }
-            case "printp":
-                if (data.payments.size() == 0) {println("No payments found."); break;}
+            case "printp": {
+                    if (data.payments.size() == 0) {println("No payments found."); break;}
 
-                println(String.format("%s\t%s\t%s\tprice", Support.fit("id", data.paymentNumberSize), Support.fit("cid", data.clientNumberSize), Support.fit("price", data.paymentAmountSize)));
+                    println(String.format("%s\t%s\t%s\tprice", Support.fit("id", data.paymentNumberSize), Support.fit("cid", data.clientNumberSize), Support.fit("price", data.paymentAmountSize)));
 
-                int count = 1;
-                int pageCount = calculatePageCount(data.payments.size());
-                for (Payment p : data.getAllPayments()) {
-                    count++;
-                    println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.paymentNumber), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber, data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.dateToString(p.paymentDate))));
-                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;                  
+                    int count = 1;
+                    int pageCount = calculatePageCount(data.payments.size());
+                    for (Payment p : data.getAllPayments()) {
+                        count++;
+                        println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.paymentNumber), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.dateToString(p.date))));
+                        if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;                  
+                    }
                 }
 
                 break;
             case "printt":
                 break;
-            case "printr":
+            case "printr": {
+                if (data.payments.size() == 0) {println("No clients found."); break;}
+
+                println(String.format("%s\t%s\t%s\tprice", Support.fit("cid", data.clientNumberSize), Support.fit("name", data.clientNameSize), Support.fit("amount owed", data.paymentAmountSize)));
+
+                int count = 1;
+
+                int pageCount = calculatePageCount(data.clients.size());
+                for (Client client : data.getAllClients()) {
+                    count++;
+                    println(String.format("%s\t%s\t%s\tprice", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(client.outstandingAmount, data.paymentAmountSize)));
+                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
+                }
+            }
                 break;
             case "prints":
+                for (Client client : data.getAllClients()) {
+                    printStatement(client);
+                }
                 break;
             case "readc":
                 if (!data.loadStore((String) args[0], false)) {
