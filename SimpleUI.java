@@ -8,8 +8,6 @@ import java.util.Date;
 import java.lang.Math;
 
 class SimpleUI {
-    final int PAGE_SIZE = 10;
-
     SimpleDateFormat printingFormat = new SimpleDateFormat("MM/dd/yyyy");
     DataManager data = new DataManager();
     TypeVerifier verifier = new TypeVerifier(data);
@@ -69,27 +67,13 @@ class SimpleUI {
         return System.console().readLine();
     }
 
-    private boolean promptNextPage(int currentElements, int pageCount) {
-        println(String.format("\nPage %d/%d\t[q] to quit [enter] next page", calculatePageCount(currentElements), pageCount + 1));
-        String result = readLine();
-        return result.strip().equals("");
-    }
-
-    private int calculatePageCount(int elements) {
-        return (int) Math.ceil((double)elements/PAGE_SIZE);
-    }
-
     private void printClients(Collection<Client> clients) {
         final int maxSizeNumber = Math.max((int) (Math.log10(Client.currentClientNumber) + 1), 2);
 
         println(String.format("%s\t%s", Support.fit("ID", maxSizeNumber), "Name"));
 
-        int count = 1;
-        int pageCount = calculatePageCount(data.clients.size());
         for (Client client : clients) {
-            count++;
             println(String.format("%s\t%s", Support.fit(String.valueOf(client.clientNumber), maxSizeNumber), client.fullName));
-            if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
         }
     }
 
@@ -141,7 +125,7 @@ class SimpleUI {
         for (Payment payment : c.payments) {
             desc.append(String.format("-%.2f\t\tPAID ON %s\n", payment.amount, Support.dateToString(payment.date)));
         }
-        desc.append(String.format("%s\nTOTAL: %+.2f", lineSeperator, c.outstandingAmount));
+        desc.append(String.format("%s\nTOTAL: %+.2f\n", lineSeperator, c.outstandingAmount));
         println(desc.toString());
     }
 
@@ -199,15 +183,11 @@ class SimpleUI {
 
                 Collection<Order> orders = data.getOrdersByDate();
 
-                println(String.format("%s\t%s\t%s\t%s\t%s\t\t%s\tPRICE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("STATUS", 8), Support.fit("DATE", Support.DATE_LENGTH)));
+                println(String.format("%s\t%s\t%s\t%s\t%s\t%s\tPRICE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("STATUS", 8), Support.fit("DATE", Support.DATE_LENGTH)));
 
-                int count = 0;
-                int pageCount = calculatePageCount(orders.size());
                 for (Order o : orders) {
                     String status = o.complete ? "COMPLETE" : "PENDING";
-                    println(String.format("%s\t%s\t%s\t%s\t%s\t\t%s\t%.2f", Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(status, 8), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), o.transactionAmount));
-                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
-                    count++;
+                    println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%.2f", Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(status, 8), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), o.transactionAmount));
                 }
                 
                 break;
@@ -225,12 +205,8 @@ class SimpleUI {
 
                 println(String.format("%s\t%s\tprice", Support.fit("BRANDS", data.brandSize), Support.fit("TIER", data.tierSize)));
 
-                int count = 1;
-                int pageCount = calculatePageCount(Prices.rps.size());
                 for (RepairPrice rp : Prices.rps) {
-                    count++;
                     println(String.format("%s\t%s\t%.2f", Support.fit(rp.brand, data.brandSize), Support.fit(rp.tier, data.tierSize), rp.price));
-                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                 }
                 break;
             }
@@ -239,12 +215,8 @@ class SimpleUI {
 
                     println(String.format("%s\t%s\t%s\tdate", Support.fit("ID", data.paymentNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("AMOUNT", data.paymentAmountSize)));
 
-                    int count = 1;
-                    int pageCount = calculatePageCount(data.payments.size());
                     for (Payment p : data.getAllPayments()) {
-                        count++;
                         println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.ID), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.fit(Support.dateToString(p.date), Support.DATE_LENGTH)));
-                        if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;                  
                     }
                 }
 
@@ -264,15 +236,10 @@ class SimpleUI {
             case "printr": {
                 println(String.format("%s\t%s\t%s\tLAST PAYMENT DATE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("OWED", data.paymentAmountSize)));
 
-                int count = 1;
-
-                int pageCount = calculatePageCount(data.clients.size());
                 for (Client client : data.getAllClients()) {
                     if (client.outstandingAmount == 0) continue;
                     Payment lastPayment = client.getLastPayment();
                     println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(String.valueOf(client.outstandingAmount), data.paymentAmountSize), Support.fit(lastPayment == null ? "" : Support.dateToString(lastPayment.date), Support.DATE_LENGTH)));
-                    count++;
-                    if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                 }
             }
                 break;
