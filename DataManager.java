@@ -16,18 +16,18 @@ class DataManager {
     HashMap<Integer, Payment> payments;
     TreeSet<Transaction> transactions;
 
-    // String sizes for support fit
-    int clientNumberSize = 0;
-    int clientNameSize = 0;
+    // String sizes for support fit - all to 8 initially to fit headings
+    int clientNumberSize = 3;
+    int clientNameSize = 5;
 
-    int orderNumberSize = 0;
+    int orderNumberSize = 3;
     
-    int brandSize = 0;
-    int tierSize = 0;
-    int repairPriceSize = 0;
+    int brandSize = 5;
+    int tierSize = 5;
+    int repairPriceSize = 5;
     
-    int paymentNumberSize = 0;
-    int paymentAmountSize = 0;
+    int paymentNumberSize = 5;
+    int paymentAmountSize = 5;
 
     DataManager() {
         clearData();
@@ -59,7 +59,7 @@ class DataManager {
 
         commandLog = new ArrayList<String>();
         for (String cmd : fetchStore(s)) {
-            commandLog.add(cmd);
+            addCommand(cmd);
         }
         saveLastStore(s);
 
@@ -67,18 +67,16 @@ class DataManager {
     }
 
     void loadDefaultStore() {
-        loadStore("default", true);
-    }
-    
-    void loadLastStore() {
-        loadStore(Support.readTextFile("laststore.txt"), true);
+        
     }
 
     void startup() {
-        if (Support.fileExists("laststore.txt"))
-            loadLastStore();
-        else
-            loadDefaultStore();
+        if (Support.fileExists("laststore.txt")) {
+            // Load the last store
+            if (loadStore(Support.readTextFile("laststore.txt"), true)) return;
+        }
+        // Load the default store
+        loadStore("default", true);
     }
 
     void saveLastStore(String s) {

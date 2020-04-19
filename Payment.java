@@ -8,7 +8,7 @@ public class Payment extends Transaction {
     double amount;
     int paymentNumber;
 
-    public Payment(Client client, double amount, Date paymentDate) {
+    public Payment(Client client, Date paymentDate, double amount) {
         this.paymentNumber = ++currentPaymentNumber;
         this.client = client;
         this.amount = amount;

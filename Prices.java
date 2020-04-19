@@ -1,7 +1,6 @@
 package app;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 /**
  * Prices
@@ -20,7 +19,7 @@ public class Prices {
     static RepairPrice findRepairPrice(String brand, String tier) {
         for (int i = 0; i < rps.size(); i++) {
             RepairPrice repairPrice = rps.get(i);
-            if (repairPrice.brand == brand && repairPrice.tier == tier)
+            if (repairPrice.brand.equals(brand) && repairPrice.tier.equals(tier))
                 return repairPrice;
         }
         return null;

@@ -14,13 +14,22 @@ class SimpleUI {
     SimpleDateFormat printingFormat = new SimpleDateFormat("MM/dd/yyyy");
     DataManager data = new DataManager();
     TypeVerifier verifier = new TypeVerifier(data);
-    String helpString = String.join("\n", "quit - Quit Bike System", "help - Print Help",
-            "addrp brand level price days - Add Repair Price", "addc firstName lastName - Add Customer",
-            "addo customerNumber date brand level comment - Add Order", "addp customerNumber date amount - Add Payment",
-            "comp orderNumber completionDate - Mark order orderNumber completed", "printrp - Print Repair Prices",
-            "printcnum - Print Clients by client Number", "printcname - Print Clients by client Name",
-            "printo - Print Orders", "printp - Print Payments", "printt - Print Transactions",
-            "printr - Print Receivables", "prints - Print Statements", "readc filename - Read Commands From Disk File",
+    String helpString = String.join("\n", "quit - Quit Bike System", 
+            "help - Print Help",
+            "addrp brand level price days - Add Repair Price", 
+            "addc firstName lastName - Add Customer",
+            "addo customerNumber date brand level comment - Add Order", 
+            "addp customerNumber date amount - Add Payment",
+            "comp orderNumber completionDate - Mark order orderNumber completed", 
+            "printrp - Print Repair Prices",
+            "printcnum - Print Clients by client Number", 
+            "printcname - Print Clients by client Name",
+            "printo - Print Orders", 
+            "printp - Print Payments", 
+            "printt - Print Transactions",
+            "printr - Print Receivables", 
+            "prints - Print Statements", 
+            "readc filename - Read Commands From Disk File",
             "savebs filename - Save Bike Shop as a file of commands in file filename",
             "restorebs filename - Restore a previously saved Bike Shop from file filename");
     // Types are as follows - 0: String, 1: Int, 2: Float, 3: Brand, 4: Tier, 5:
@@ -30,8 +39,10 @@ class SimpleUI {
         typeLookup.put("addrp", new Types[] { Types.String, Types.String, Types.Double, Types.Int });
         typeLookup.put("addc", new Types[] { Types.String, Types.String });
         typeLookup.put("addo", new Types[] { Types.Client, Types.Date, Types.Brand, Types.Tier, Types.String });
-        typeLookup.put("addp", new Types[] { Types.Client, Types.String, Types.Double });
+        typeLookup.put("addp", new Types[] { Types.Client, Types.Date, Types.Double });
         typeLookup.put("comp", new Types[] { Types.Order });
+        typeLookup.put("savebs", new Types[] { Types.String });
+        typeLookup.put("savebs", new Types[] { Types.String });
     }
 
     private void println(String s) {
@@ -98,18 +109,6 @@ class SimpleUI {
         println(desc.toString());
     }
 
-    private void printTransactions() {
-        StringBuilder desc = new StringBuilder();
-        println(String.format("%s\t%10s\t%10s\t%s", Support.fit("CID", data.clientNumberSize), "TYPE", "DATE", Support.fit("AMOUNT", data.paymentAmountSize)));
-
-        for (Transaction transaction : data.getTransactionsByDate()) {
-            String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
-            println(String.format("%s\t%10s\t%10s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), type, Support.dateToString(transaction.date), Support.fit(String.valueOf(transaction.transactionAmount), data.paymentAmountSize)));
-        }
-
-        println(desc.toString());
-    }
-
     private boolean executeCmd(Object[] args) {
         switch ((String) args[0]) {
             case "quit":
@@ -138,9 +137,9 @@ class SimpleUI {
                 break;
             case "addp": {
                 Client client = (Client) args[1];
-                Payment newPayment = new Payment(client, (Double) args[2], (Date) args[3]);
+                Payment newPayment = new Payment(client, (Date) args[2], (double) args[3]);
                 data.addPayment(newPayment);
-                println(String.format("Added a $%.2f payment (ID: %d) for %s %s (ID: %d)", args[2],
+                println(String.format("Added a $%.2f payment (ID: %d) for %s %s (ID: %d)", args[3],
                         newPayment.paymentNumber, client.firstName, client.lastName, client.clientNumber));
             }
                 break;
@@ -156,12 +155,12 @@ class SimpleUI {
 
                 Collection<Order> orders = data.getAllOrders();
 
-                println(String.format("%s\t%s\t%s\t%s\tClient ID\tprice", Support.fit("brands", data.brandSize), Support.fit("tier", data.tierSize), Support.fit("Client Name", data.clientNameSize)));
+                println(String.format("%s\t%s\t%s\t%s\tprice", Support.fit("CID", data.brandSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.clientNameSize), Support.fit("TIER", data.clientNumberSize)));
 
                 int count = 0;
                 int pageCount = calculatePageCount(orders.size());
                 for (Order o : orders) {
-                    println(String.format("%s\t%s\t%s\t%.2f", Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.brandSize), Support.fit(o.client.fullName, data.tierSize), o.repairPrice));
+                    println(String.format("%s\t%s\t%s\t%s\t%.2f", Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), o.transactionAmount));
                     if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                     count++;
                 }
@@ -179,7 +178,7 @@ class SimpleUI {
             case "printrp": {
                 if (Prices.rps.size() == 0) {println("No orders found."); break;}
 
-                println(String.format("%s\t%s\tprice", Support.fit("brands", data.brandSize), Support.fit("tier", data.tierSize)));
+                println(String.format("%s\t%s\tprice", Support.fit("BRANDS", data.brandSize), Support.fit("TIER", data.tierSize)));
 
                 int count = 1;
                 int pageCount = calculatePageCount(Prices.rps.size());
@@ -193,31 +192,41 @@ class SimpleUI {
             case "printp": {
                     if (data.payments.size() == 0) {println("No payments found."); break;}
 
-                    println(String.format("%s\t%s\t%s\tprice", Support.fit("id", data.paymentNumberSize), Support.fit("cid", data.clientNumberSize), Support.fit("price", data.paymentAmountSize)));
+                    println(String.format("%s\t%s\t%s\tdate", Support.fit("ID", data.paymentNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("AMOUNT", data.paymentAmountSize)));
 
                     int count = 1;
                     int pageCount = calculatePageCount(data.payments.size());
                     for (Payment p : data.getAllPayments()) {
                         count++;
-                        println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.paymentNumber), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.dateToString(p.date))));
+                        println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.paymentNumber), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.dateToString(p.date)));
                         if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;                  
                     }
                 }
 
                 break;
-            case "printt":
+            case "printt": {
+                StringBuilder desc = new StringBuilder();
+                println(String.format("%s\t%s\t%-7s\t%-7s\tAMOUNT", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), "TYPE", "DATE"));
+
+                for (Transaction transaction : data.getTransactionsByDate()) {
+                    String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
+                    println(String.format("%s\t%s\t%-7s\t%-7s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), Support.fit(transaction.client.fullName, data.clientNameSize), type, Support.dateToString(transaction.date), Support.fit(String.valueOf(transaction.transactionAmount), data.paymentAmountSize)));
+                }
+
+                println(desc.toString());
+            }
                 break;
             case "printr": {
                 if (data.payments.size() == 0) {println("No clients found."); break;}
 
-                println(String.format("%s\t%s\t%s\tprice", Support.fit("cid", data.clientNumberSize), Support.fit("name", data.clientNameSize), Support.fit("amount owed", data.paymentAmountSize)));
+                println(String.format("%s\t%s\t%s", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("OWED", data.paymentAmountSize)));
 
                 int count = 1;
 
                 int pageCount = calculatePageCount(data.clients.size());
                 for (Client client : data.getAllClients()) {
                     count++;
-                    println(String.format("%s\t%s\t%s\tprice", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(client.outstandingAmount, data.paymentAmountSize)));
+                    println(String.format("%s\t%s\t%s", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(String.valueOf(client.outstandingAmount), data.paymentAmountSize)));
                     if (count % PAGE_SIZE == 0) if (!promptNextPage(count, pageCount)) break;
                 }
             }
@@ -228,24 +237,24 @@ class SimpleUI {
                 }
                 break;
             case "readc":
-                if (!data.loadStore((String) args[0], false)) {
+                if (!data.loadStore((String) args[1], false)) {
                     println("Invalid file name!");
                 }
                 break;
             case "savebs": {
-                String storeName = (String) args[0];
+                String storeName = (String) args[1];
                 data.saveStore(storeName);
                 println(String.format("Shop successfully saved as '%s'!", storeName));
                 break;
             }
             case "restorebs":
-                if (!data.loadStore((String) args[0], true)) {
+                if (!data.loadStore((String) args[1], true)) {
                     println("Invalid shop name!");
                 }
                 break;              
         }
 
-        return wasError();
+        return !wasError();
     }
 
     void run() {
@@ -266,23 +275,28 @@ class SimpleUI {
             String line = readLine();
             // Verify types
             Object[] args = Support.splitStringIntoParts(line);
-            if (typeLookup.containsKey(args[0])) {
-                Types[] types = typeLookup.get(args[0]);
+            String command = (String) args[0];
+            if (typeLookup.containsKey(command)) {
+                Types[] types = typeLookup.get(command);
+                int numberArgsDiff = args.length - 1 - types.length;
 
-                if (types.length < args.length - 1)
-                    Support.setErrorMessage("Too little parameters.");
-                else if (types.length > args.length - 1)
+                if (numberArgsDiff < 0)
+                    Support.setErrorMessage(String.format("Missing %d other parameters.", Math.abs(numberArgsDiff)));
+                else if (numberArgsDiff > 0)
                     Support.setErrorMessage("Too many parameters.");
                 else
                     args = verifier.getTypes((String[]) args, typeLookup.get(args[0]));
             }
             // Check for error
-            if (wasError())
+            if (wasError() || !executeCmd(args)) {
+                println(Support.getErrorMessage());
                 continue;
+            }
 
-            if (executeCmd(args)) {
+            // Add command to the log if changed data
+            if (command.startsWith("add") || command.equals("comp"))
                 data.addCommand(line);
-            };
+
         }        
     }
 }
