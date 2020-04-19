@@ -16,7 +16,10 @@ public class Support {
     private static String errorMessage = "";
     private static boolean wasError = false;
 
-    static SimpleDateFormat dateFormat = new SimpleDateFormat("MMddyy");
+    static SimpleDateFormat dateFormat = new SimpleDateFormat("MMddyyyy");
+    static SimpleDateFormat readableDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    static final int DATE_LENGTH = 10;
 
     public static Date getDate(String s) {
         try {
@@ -28,7 +31,7 @@ public class Support {
     }
 
     public static String dateToString(Date d) {
-        return dateFormat.format(d);
+        return readableDateFormat.format(d);
     }
 
     public static String getErrorMessage() {

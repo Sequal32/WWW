@@ -14,20 +14,21 @@ class DataManager {
     HashMap<Integer, Client> clients;
     HashMap<Integer, Order> orders;
     HashMap<Integer, Payment> payments;
-    TreeSet<Transaction> transactions;
 
-    // String sizes for support fit - all to 8 initially to fit headings
+    // String sizes for support fit - all to initially fit headings
     int clientNumberSize = 3;
     int clientNameSize = 5;
 
     int orderNumberSize = 3;
     
     int brandSize = 5;
-    int tierSize = 5;
-    int repairPriceSize = 5;
+    int tierSize = 4;
+    int repairPriceSize = 4;
     
     int paymentNumberSize = 5;
     int paymentAmountSize = 5;
+
+    String currentStore;
 
     DataManager() {
         clearData();
@@ -37,7 +38,6 @@ class DataManager {
         clients = new HashMap<Integer, Client>();
         orders = new HashMap<Integer, Order>();
         payments = new HashMap<Integer, Payment>();
-        transactions = new TreeSet<Transaction>();
     }
 
     private String prepareName(String s) {
@@ -58,6 +58,7 @@ class DataManager {
         if (overwrite) clearData();
 
         commandLog = new ArrayList<String>();
+        currentStore = s;
         for (String cmd : fetchStore(s)) {
             addCommand(cmd);
         }
@@ -97,9 +98,10 @@ class DataManager {
     }
 
     // Manage the data
-    void addOrder(Order order) {
-        orders.put(order.orderNumber, order);
-        orderNumberSize = Math.max(orderNumberSize, order.orderNumber);
+    void addOrder(Client client, Order order) {
+        client.addOrder(order);
+        orders.put(order.ID, order);
+        orderNumberSize = Math.max(orderNumberSize, order.ID);
     }
 
     void addClient(Client client) {
@@ -108,9 +110,10 @@ class DataManager {
         clientNameSize = Math.max(clientNameSize, client.fullName.length());
     }
 
-    void addPayment(Payment payment) {
-        payments.put(payment.paymentNumber, payment);
-        paymentNumberSize = Math.max(paymentNumberSize, getDigits(payment.paymentNumber));
+    void addPayment(Client client, Payment payment) {
+        client.addPayment(payment);
+        payments.put(payment.ID, payment);
+        paymentNumberSize = Math.max(paymentNumberSize, getDigits(payment.ID));
         paymentAmountSize = Math.max(paymentAmountSize, getDigits((int) payment.amount));
     }
 
@@ -149,6 +152,13 @@ class DataManager {
         List<Payment> paymentsSorted = new ArrayList<Payment>(payments.values());
         Collections.sort(paymentsSorted, Comparator.comparing(Payment::getDate));
         return paymentsSorted;
+    }
+
+    Collection<Order> getOrdersByDate() {
+        List<Order> ordersSorted = new ArrayList<Order>(orders.values());
+        Collections.sort(ordersSorted, Comparator.comparing(Order::getDate));
+        Collections.reverse(ordersSorted);
+        return ordersSorted;
     }
 
     Client getClient(int clientId) {

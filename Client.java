@@ -21,6 +21,12 @@ public class Client {
         this.fullName = Support.capitalizeFirstLetter(firstName) + " " + Support.capitalizeFirstLetter(lastName);
     }
 
+    public Client(String firstName, String lastName, int clientNumber){
+        this(firstName, lastName);
+        this.clientNumber = clientNumber;
+        currentClientNumber = Math.max(currentClientNumber, clientNumber);
+    }
+
     void addOrder(Order o) {
         outstandingAmount += o.transactionAmount;
         orders.add(o);
@@ -37,5 +43,11 @@ public class Client {
 
     public String getName() {
         return fullName;
+    }
+    
+    public Payment getLastPayment() {
+        if (payments.size() == 0)
+            return null;
+        return payments.get(payments.size() - 1);
     }
 }
