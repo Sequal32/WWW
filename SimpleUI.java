@@ -131,9 +131,6 @@ class SimpleUI {
 
     private boolean executeCmd(Object[] args) {
         switch ((String) args[0]) {
-            case "quit":
-                println("Goodbye!");
-                break;
             case "help":
                 println(helpString);
                 break;
@@ -142,9 +139,15 @@ class SimpleUI {
                 println(String.format("Added %s as a new repair price!", args[1]));
                 break;
             case "addc":
-                Client newClient = new Client(Support.capitalizeFirstLetter((String) args[1]), Support.capitalizeFirstLetter((String) args[2]), nextModifier);
+                Client newClient;
+                if (nextModifier == null)
+                    newClient = new Client(Support.capitalizeFirstLetter((String) args[1]), Support.capitalizeFirstLetter((String) args[2]));
+                else {
+                    newClient = new Client(Support.capitalizeFirstLetter((String) args[1]), Support.capitalizeFirstLetter((String) args[2]), nextModifier);
+                    nextModifier = null;
+                }
+
                 data.addClient(newClient);
-                nextModifier = null;
 
                 println(String.format("Added client %s %s (ID: %d) to the database.", args[1], args[2],
                         newClient.clientNumber));
@@ -153,12 +156,17 @@ class SimpleUI {
                 // Test if a comment was provided
                 Order newOrder = null;
                 if (args.length >= 6)
-                    newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], (String) args[5], nextModifier);
+                    if (nextModifier == null)
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], (String) args[5]);
+                    else
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], (String) args[5], nextModifier);
                 else
-                    newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], nextModifier);
+                    if (nextModifier == null)
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4]);
+                    else
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], nextModifier);
 
                 data.addOrder(newOrder.client, newOrder);
-                nextModifier = null;
 
                 println(String.format("Added an order for a %s tuneup on type %s (ID: %d) to the database.", args[4],
                         args[3], newOrder.ID));
@@ -269,6 +277,9 @@ class SimpleUI {
             case "rncn":
                 nextModifier = (Integer) args[1];
                 break;
+            default:
+                Support.setErrorMessage(args[0] + " is not a valid command.");
+                break;
         }
 
         return !wasError();
@@ -287,6 +298,12 @@ class SimpleUI {
             // Verify types
             Object[] args = Support.splitStringIntoParts(line);
             String command = (String) args[0];
+            // Check for program exit
+            if (command.equals("quit")) {
+                print("Goodbye!"); 
+                return;
+            }
+
             args = getTypes(args);
             // Check for error
             if (args == null || wasError() || !executeCmd(args)) {
