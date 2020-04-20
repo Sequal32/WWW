@@ -90,6 +90,14 @@ public class TypeVerifier {
                     if (parsed == null) 
                         Support.setErrorMessage("Order does not exist in the database!");
                     break;
+                case Payment:
+                    Integer paymentNumber = getInt(val);
+                    if (paymentNumber == null)
+                        {Support.setErrorMessage("Not a valid payment number."); break;}
+                    parsed = data.getPayment(paymentNumber);
+                    if (parsed == null) 
+                        Support.setErrorMessage("Payment does not exist in the database!");
+                    break;
                 default:
                     parsed = val;
             }

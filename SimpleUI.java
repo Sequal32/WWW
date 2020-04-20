@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 class SimpleUI {
     SimpleDateFormat printingFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -14,11 +15,13 @@ class SimpleUI {
     TypeVerifier verifier = new TypeVerifier(data);
     String helpString = String.join("\n", "quit - Quit Bike System", 
             "help - Print Help",
+            "\nADDING TO THE DATABASE",
             "addrp brand level price days - Add Repair Price", 
             "addc firstName lastName - Add Customer",
             "addo customerNumber date brand level comment - Add Order", 
             "addp customerNumber date amount - Add Payment",
             "comp ID completionDate - Mark order ID completed", 
+            "\nGETTING INFORMATION",
             "printrp - Print Repair Prices",
             "printcnum - Print Clients by client Number", 
             "printcname - Print Clients by client Name",
@@ -27,12 +30,23 @@ class SimpleUI {
             "printt - Print Transactions",
             "printr - Print Receivables", 
             "prints - Print Statements", 
+            "\nLOOKING UP DATA",
+            "lookupl lastName - Looks up clients by the given lastName",
+            "lookupf firstName - Looks up clients by the given firstName",
+            "geto - Gets an order by a order id",
+            "getp - Gets an payment by a payment id",
+            "getc - Gets an client by a client id",
+            "\nDATA MANAGEMENT",
             "readc filename - Read Commands From Disk File",
             "savebs filename - Save Bike Shop as a file of commands in file filename",
             "restorebs filename - Restore a previously saved Bike Shop from file filename");
     Map<String, Types[]> typeLookup = new HashMap<String, Types[]>();
     // used for rnon and rncn
-    Integer nextModifier;
+    Integer nextClientModifier;
+    Integer nextOrderModifier;
+    Integer nextPaymentModifier;
+    boolean loading = false;
+    String toAdd;
 
     SimpleUI() {
         typeLookup.put("addrp", new Types[] { Types.String, Types.String, Types.Float, Types.Int });
@@ -44,6 +58,13 @@ class SimpleUI {
         typeLookup.put("restorebs", new Types[] { Types.String });
         typeLookup.put("rnon", new Types[] { Types.Int });
         typeLookup.put("rncn", new Types[] { Types.Int });
+        typeLookup.put("rnpn", new Types[] { Types.Int });
+        typeLookup.put("lookupcl", new Types[] { Types.String });
+        typeLookup.put("lookupcf", new Types[] { Types.String });
+        typeLookup.put("geto", new Types[] { Types.String });
+        typeLookup.put("getp", new Types[] { Types.String });
+        typeLookup.put("getc", new Types[] { Types.String });
+        typeLookup.put("printcinfo", new Types[] { Types.Client });
     }
 
     private void println(String s) {
@@ -84,37 +105,52 @@ class SimpleUI {
 
     private void loadData() {
         println("LOADING STORE " + data.currentStore);
+        loading = true;
         for (String command : data.commandLog) {
             println(command);
             String[] parts = Support.splitStringIntoParts(command);
             Object[] types = verifier.getTypes(parts, typeLookup.get(parts[0]));
 
             if (wasError()) {
-                println(Support.getErrorMessage() + "\nPress enter to acknowledge.");
+                println("\n" + Support.getErrorMessage() + "Press enter to acknowledge.");
                 readLine();
                 continue;
             }
 
             executeCmd(types);
         }
+        loading = false;
         print("FINISHED LOADING\n\n");
     }
 
     // Analysis reports
     final String lineSeperator = new String(new char[40]).replace("\0", "=");
     private void printStatement(Client c) {
-        StringBuilder desc = new StringBuilder();
-        desc.append(String.format("Statement for %s\n%s\n", c.fullName, lineSeperator));
-        desc.append(String.format("%s\tID\tCHARGE\tCREDIT\tDESC\n", Support.fit("DATE", Support.DATE_LENGTH)));
+        println(String.format("Statement for %s\n%s", c.fullName, lineSeperator));
+        println(String.format("%s\tID\tCHARGE\tCREDIT\tDESC", Support.fit("DATE", Support.DATE_LENGTH)));
 
-        for (Order order : c.orders) {
-            desc.append(String.format("%s\t%s\t%s\t%s\t%s TIER FOR %s\n", Support.fit(Support.dateToString(order.date), Support.DATE_LENGTH), Support.fit("O" + String.valueOf(order.ID), data.orderNumberSize), Support.fit(String.format("%.2f", order.transactionAmount), data.paymentAmountSize), Support.fit("", data.paymentAmountSize), order.tier.toUpperCase(), order.brand.toUpperCase()));
+        for (Transaction transaction : data.getTransactionsByDate(c)) {
+            if (transaction instanceof Order) {
+                Order order = (Order) transaction;
+                println(String.format("%s\t%s\t%s\t%s\t%s TIER FOR %s", Support.fit(Support.dateToString(order.date), Support.DATE_LENGTH), Support.fit("O" + String.valueOf(order.ID), data.orderNumberSize), Support.fit(String.format("%.2f", order.transactionAmount), data.paymentAmountSize), Support.fit("", data.paymentAmountSize), order.tier.toUpperCase(), order.brand.toUpperCase()));
+            }
+            else {
+                Payment payment = (Payment) transaction;
+                println(String.format("%s\t%s\t%s\t%s\tDEPOSIT", Support.fit(Support.dateToString(payment.date), Support.DATE_LENGTH), Support.fit("P" + String.valueOf(payment.ID), data.orderNumberSize), Support.fit("", data.paymentAmountSize), Support.fit(String.format("%.2f", payment.transactionAmount), data.paymentAmountSize)));
+            }
         }
-        for (Payment payment : c.payments) {
-            desc.append(String.format("%s\t%s\t%s\t%s\tDEPOSIT\n", Support.fit(Support.dateToString(payment.date), Support.DATE_LENGTH), Support.fit("P" + String.valueOf(payment.ID), data.orderNumberSize), Support.fit("", data.paymentAmountSize), Support.fit(String.format("%.2f", payment.transactionAmount), data.paymentAmountSize)));
+
+        println(String.format("%s\t\nBALANCE: %.2f\n", lineSeperator, c.outstandingAmount));
+    }
+
+    private void printReceivables(Collection<Client> clients) {
+        println(String.format("%s\t%s\t%s\t%s\tLAST PAYMENT DATE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("OWED", data.orderAmountSize), Support.fit("PAID", data.paymentAmountSize)));
+
+        for (Client client : clients) {
+            if (client.outstandingAmount == 0) continue;
+            Payment lastPayment = client.getLastPayment();
+            println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(String.valueOf(client.outstandingAmount), data.getDigits((int) client.outstandingAmount) + 3), Support.fit(String.format("%.2f", client.totalPaid), data.getDigits((int) client.totalPaid) + 3), Support.fit(lastPayment == null ? "" : Support.dateToString(lastPayment.date), Support.DATE_LENGTH)));
         }
-        desc.append(String.format("%s\t\nBALANCE: %.2f\n", lineSeperator, c.outstandingAmount));
-        println(desc.toString());
     }
 
     private void printClients(Collection<Client> clients) {
@@ -136,10 +172,12 @@ class SimpleUI {
     }
 
     private void printOrders(Collection<Order> orders) {
-        println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize)));
+        println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize), Support.fit("DAYS LEFT", 9)));
 
         for (Order o : orders) {
-            println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), o.comment == null ? "" : o.comment));
+            // Find diff of two dates
+            String daysUntilDue = Support.fit(String.valueOf((int) TimeUnit.DAYS.convert((o.date.getTime()-new Date().getTime()), TimeUnit.MILLISECONDS)), Support.DATE_LENGTH);
+            println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), Support.fit(o.completionDate == null ? daysUntilDue : "", 9), o.comment == null ? "" : o.comment));
         }
     }
 
@@ -150,10 +188,6 @@ class SimpleUI {
             String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
             println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), Support.fit(transaction.client.fullName, data.clientNameSize), type, Support.fit(Support.dateToString(transaction.date), Support.DATE_LENGTH), Support.fit(String.format("%.2f", transaction.transactionAmount), data.paymentAmountSize)));
         }
-    }
-
-    private void lookupClient() {
-
     }
 
     private boolean executeCmd(Object[] args) {
@@ -167,14 +201,17 @@ class SimpleUI {
                 break;
             case "addc":
                 Client newClient;
-                if (nextModifier == null)
+                if (nextClientModifier == null)
                     newClient = new Client(Support.capitalizeFirstLetter((String) args[1]), Support.capitalizeFirstLetter((String) args[2]));
                 else {
-                    newClient = new Client(Support.capitalizeFirstLetter((String) args[1]), Support.capitalizeFirstLetter((String) args[2]), nextModifier);
-                    nextModifier = null;
+                    newClient = new Client(Support.capitalizeFirstLetter((String) args[1]), Support.capitalizeFirstLetter((String) args[2]), nextClientModifier);
+                    nextClientModifier = null;
                 }
 
                 data.addClient(newClient);
+
+                if (!loading)
+                    toAdd = "rncn " + Client.currentClientNumber;
 
                 println(String.format("Added client %s %s (ID: %d) to the database.", args[1], args[2],
                         newClient.clientNumber));
@@ -185,28 +222,40 @@ class SimpleUI {
                 // If order has a comment/specified ID
                 if (args.length >= 6) {
                     String comment = String.join(" ", Arrays.copyOfRange(args, 5, args.length - 1, String[].class));
-                    if (nextModifier == null)
+                    if (nextOrderModifier == null)
                         newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], comment);
                     else
-                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], comment, nextModifier);
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], comment, nextOrderModifier);
                 }
                 else {
-                    if (nextModifier == null)
+                    if (nextOrderModifier == null)
                         newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4]);
                     else
-                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], nextModifier);
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], nextOrderModifier);
                 }
-
+                nextOrderModifier = null;
                 data.addOrder(newOrder.client, newOrder);
+
+                if (!loading)
+                    toAdd = "rnon " + Order.currentOrderNumber;
 
                 println(String.format("Added an order for a %s tuneup on type %s (ID: %d) to the database.", args[4],
                         args[3], newOrder.ID));
                 break;
             case "addp": {
                 Client client = (Client) args[1];
-                Payment newPayment = new Payment(client, (Date) args[2], (float) args[3]);
+
+                Payment newPayment;
+                if (nextPaymentModifier == null)
+                    newPayment = new Payment(client, (Date) args[2], (float) args[3]);
+                else
+                    newPayment = new Payment(client, (Date) args[2], (float) args[3], (int) nextPaymentModifier);
+
                 data.addPayment(client, newPayment);
-                println(String.format("Added a $%.2f payment (ID: %d) for %s %s (ID: %d)", args[3],
+                if (!loading)
+                    toAdd = "rnpn " + Payment.currentPaymentNumber;
+
+                println(String.format("Added a payment of %.2f (ID: %d) for %s %s (ID: %d)", args[3],
                         newPayment.ID, client.firstName, client.lastName, client.clientNumber));
             }
                 break;
@@ -242,23 +291,28 @@ class SimpleUI {
             }
             case "printp": {
                     if (data.payments.size() == 0) {println("No payments found."); break;}
-                    printPayments(data.getAllPayments());
+                    printPayments(data.getPaymentsByDate());
                 }
 
                 break;
+            case "printcinfo": {
+                Client c = (Client) args[1];
+                println("ORDERS");
+                printOrders(c.orders);
+                println("\nPAYMENTS");
+                printPayments(c.payments);
+                println("\n");
+                printStatement(c);
+                println("\nRECEIVABLE");
+                printReceivables(Arrays.asList(new Client[] {c}));
+            }
+            break;
             case "printt": {
                 printTransactions(data.getTransactionsByDate());
             }
             break;
             case "printr": {
-                println(String.format("%s\t%s\t%s\t%s\tLAST PAYMENT DATE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("OWED", data.orderAmountSize), Support.fit("PAID", data.paymentAmountSize)));
-
-                for (Client client : data.getAllClients()) {
-                    if (client.outstandingAmount == 0) continue;
-                    Payment lastPayment = client.getLastPayment();
-                    println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(String.valueOf(client.outstandingAmount), data.getDigits((int) client.outstandingAmount) + 3), Support.fit(String.format("%.2f", client.totalPaid), data.getDigits((int) client.totalPaid) + 3), Support.fit(lastPayment == null ? "" : Support.dateToString(lastPayment.date), Support.DATE_LENGTH)));
-                }
-
+                printReceivables(data.getAllClients());
                 println(String.format("\nTOTAL OWED: %.2f\tTOTAL PAID: %.2f\nNET: %+.2f: ", data.totalOwed, data.totalPaid, data.totalPaid-data.totalOwed));
             }
                 break;
@@ -267,6 +321,25 @@ class SimpleUI {
                     printStatement(client);
                 }
                 break;
+            case "lookupcf": {
+                printClients(Levenshtein.getBestMatchesOnObject((String) args[1], data.getAllClients(), Client::getFirstName));
+            }
+            break;
+            case "lookupcl": {
+                printClients(Levenshtein.getBestMatchesOnObject((String) args[1], data.getAllClients(), Client::getLastName));
+            }
+            break;
+            case "geto": {
+                printOrders(Arrays.asList(new Order[] {(Order) args[1]}));
+            }
+            break;
+            case "getp": {
+                printPayments(Arrays.asList(new Payment[] {(Payment) args[1]}));
+            }
+            break;
+            case "getc": {
+                printClients(Arrays.asList(new Client[] {(Client) args[1]}));
+            }
             case "readc":
                 if (!data.loadStore((String) args[1], false))
                     println("Invalid file name!");
@@ -286,8 +359,13 @@ class SimpleUI {
                     loadData();
                 break;  
             case "rnon":
+                nextOrderModifier = (int) args[1];
+                break;
             case "rncn":
-                nextModifier = (Integer) args[1];
+                nextClientModifier = (int) args[1];
+                break;
+            case "rnpn":
+                nextPaymentModifier = (int) args[1];
                 break;
             default:
                 Support.setErrorMessage(args[0] + " is not a valid command.");
@@ -332,6 +410,10 @@ class SimpleUI {
             // Add command to the log if changed data
             if (command.startsWith("add") || command.equals("comp"))
                 data.addCommand(line);
+            if (toAdd != null) {
+                data.addCommand(toAdd);
+                toAdd = null;
+            }
 
         }        
     }

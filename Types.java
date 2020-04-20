@@ -8,5 +8,6 @@ public enum Types {
     Tier,
     Date,
     Client,
-    Order
+    Order,
+    Payment
 }

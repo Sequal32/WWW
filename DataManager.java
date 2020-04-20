@@ -148,6 +148,14 @@ class DataManager {
         return transactions;
     }
 
+    Collection<Transaction> getTransactionsByDate(Client c) {
+        List<Transaction> transactions = new ArrayList<Transaction>();
+        transactions.addAll(c.orders);
+        transactions.addAll(c.payments);
+        Collections.sort(transactions, Comparator.comparing(Transaction::getDate));
+        return transactions;
+    }
+
     Collection<Client> getClientsByName() {
         List<Client> clientsSorted = new ArrayList<Client>(clients.values());
         Collections.sort(clientsSorted, Comparator.comparing(Client::getName));
@@ -163,7 +171,6 @@ class DataManager {
     Collection<Order> getOrdersByDate() {
         List<Order> ordersSorted = new ArrayList<Order>(orders.values());
         Collections.sort(ordersSorted, Comparator.comparing(Order::getDate));
-        Collections.reverse(ordersSorted);
         return ordersSorted;
     }
 

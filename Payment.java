@@ -12,6 +12,11 @@ public class Payment extends Transaction {
         this.date = paymentDate;
     }
 
+    public Payment(Client client, Date paymentDate, float amount, int id) {
+        this(client, paymentDate, amount);
+        this.ID = id;
+    }
+
     public Date getDate() {
         return date;
     }

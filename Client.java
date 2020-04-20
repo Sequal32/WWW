@@ -46,6 +46,14 @@ public class Client {
     public String getName() {
         return fullName;
     }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
     
     public Payment getLastPayment() {
         if (payments.size() == 0)

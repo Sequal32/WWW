@@ -3,7 +3,7 @@ package app;
 import java.util.Date;
 
 public class Order extends Transaction {
-    private static int currentOrderNumber;
+    static int currentOrderNumber;
 
     Date promiseDate;
     Date completionDate;
