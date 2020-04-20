@@ -13,8 +13,6 @@ public class Order extends Transaction {
     String tier;
     String comment;
 
-    boolean complete = false;
-
     Order(Client client, Date orderDate, String brand, String tier)  {
         this.repairPrice = Prices.getRepairPrice(brand, tier);
 
@@ -44,8 +42,7 @@ public class Order extends Transaction {
         this.ID = ID;
     }
 
-    void markComplete() {
-        this.completionDate = new Date();
-        this.complete = true;
+    void markComplete(Date completeDate) {
+        this.completionDate = completeDate;
     }
 }

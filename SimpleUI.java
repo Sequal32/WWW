@@ -1,11 +1,12 @@
 package app;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.Math;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.lang.Math;
+import java.util.HashMap;
+import java.util.Map;
 
 class SimpleUI {
     SimpleDateFormat printingFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -39,7 +40,7 @@ class SimpleUI {
         typeLookup.put("addc", new Types[] { Types.String, Types.String });
         typeLookup.put("addo", new Types[] { Types.Client, Types.Date, Types.Brand, Types.Tier });
         typeLookup.put("addp", new Types[] { Types.Client, Types.Date, Types.Double });
-        typeLookup.put("comp", new Types[] { Types.Order });
+        typeLookup.put("comp", new Types[] { Types.Order, Types.Date });
         typeLookup.put("savebs", new Types[] { Types.String });
         typeLookup.put("restorebs", new Types[] { Types.String });
         typeLookup.put("rnon", new Types[] { Types.Int });
@@ -84,8 +85,6 @@ class SimpleUI {
 
             if (numberArgsDiff < 0)
                 Support.setErrorMessage(String.format("Missing %d other parameters.", Math.abs(numberArgsDiff)));
-            else if (numberArgsDiff > 0)
-                Support.setErrorMessage("Too many parameters.");
             else
                 return verifier.getTypes((String[]) args, typeLookup.get(args[0]));
         }
@@ -117,15 +116,15 @@ class SimpleUI {
     private void printStatement(Client c) {
         StringBuilder desc = new StringBuilder();
         desc.append(String.format("Statement for %s\n%s\n", c.fullName, lineSeperator));
-        desc.append("DEBT\t\tREASON\n");
+        desc.append(String.format("%s\tID\tCHARGE\tCREDIT\tDESC\n", Support.fit("DATE", Support.DATE_LENGTH)));
 
         for (Order order : c.orders) {
-            desc.append(String.format("+%.2f\t\t%s tier %s tuneup\n", order.transactionAmount, order.tier.toUpperCase(), order.brand.toUpperCase()));
+            desc.append(String.format("%s\t%s\t%s\t%s\t%s TIER FOR %s\n", Support.fit(Support.dateToString(order.date), Support.DATE_LENGTH), Support.fit("O" + String.valueOf(order.ID), data.orderNumberSize), Support.fit(String.format("%.2f", order.transactionAmount), data.paymentAmountSize), Support.fit("", data.paymentAmountSize), order.tier.toUpperCase(), order.brand.toUpperCase()));
         }
         for (Payment payment : c.payments) {
-            desc.append(String.format("-%.2f\t\tPAID ON %s\n", payment.amount, Support.dateToString(payment.date)));
+            desc.append(String.format("%s\t%s\t%s\t%s\tDEPOSIT\n", Support.fit(Support.dateToString(payment.date), Support.DATE_LENGTH), Support.fit("P" + String.valueOf(payment.ID), data.orderNumberSize), Support.fit("", data.paymentAmountSize), Support.fit(String.format("%.2f", payment.transactionAmount), data.paymentAmountSize)));
         }
-        desc.append(String.format("%s\nTOTAL: %+.2f\n", lineSeperator, c.outstandingAmount));
+        desc.append(String.format("%s\t\nBALANCE: %.2f\n", lineSeperator, c.outstandingAmount));
         println(desc.toString());
     }
 
@@ -155,16 +154,20 @@ class SimpleUI {
             case "addo":
                 // Test if a comment was provided
                 Order newOrder = null;
-                if (args.length >= 6)
+                // If order has a comment/specified ID
+                if (args.length >= 6) {
+                    String comment = String.join(" ", Arrays.copyOfRange(args, 5, args.length - 1, String[].class));
                     if (nextModifier == null)
-                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], (String) args[5]);
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], comment);
                     else
-                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], (String) args[5], nextModifier);
-                else
+                        newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], comment, nextModifier);
+                }
+                else {
                     if (nextModifier == null)
                         newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4]);
                     else
                         newOrder = new Order((Client) args[1], (Date) args[2], (String) args[3], (String) args[4], nextModifier);
+                }
 
                 data.addOrder(newOrder.client, newOrder);
 
@@ -181,7 +184,7 @@ class SimpleUI {
                 break;
             case "comp":
                 Order order = (Order) args[1];
-                order.markComplete();
+                order.markComplete((Date) args[2]);
                 println(String.format("%s's order for a %s tuneup on type %s (ID: %d) marked complete on %s.",
                         order.client.firstName, order.tier, order.brand, order.ID,
                         printingFormat.format(order.completionDate)));
@@ -191,15 +194,12 @@ class SimpleUI {
 
                 Collection<Order> orders = data.getOrdersByDate();
 
-                println(String.format("%s\t%s\t%s\t%s\t%s\t%s\tPRICE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("STATUS", 8), Support.fit("DATE", Support.DATE_LENGTH)));
+                println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize)));
 
                 for (Order o : orders) {
-                    String status = o.complete ? "COMPLETE" : "PENDING";
-                    println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%.2f", Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(status, 8), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), o.transactionAmount));
+                    println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), o.comment == null ? "" : o.comment));                }
                 }
-                
                 break;
-            }
             case "printcname":
                 if (data.clients.size() == 0) {println("No clients found."); break;}
                 printClients(data.getClientsByName());
@@ -224,7 +224,7 @@ class SimpleUI {
                     println(String.format("%s\t%s\t%s\tdate", Support.fit("ID", data.paymentNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("AMOUNT", data.paymentAmountSize)));
 
                     for (Payment p : data.getAllPayments()) {
-                        println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.ID), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.amount), data.paymentAmountSize), Support.fit(Support.dateToString(p.date), Support.DATE_LENGTH)));
+                        println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.ID), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.transactionAmount), data.paymentAmountSize), Support.fit(Support.dateToString(p.date), Support.DATE_LENGTH)));
                     }
                 }
 
@@ -235,7 +235,7 @@ class SimpleUI {
 
                 for (Transaction transaction : data.getTransactionsByDate()) {
                     String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
-                    println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), Support.fit(transaction.client.fullName, data.clientNameSize), type, Support.fit(Support.dateToString(transaction.date), Support.DATE_LENGTH), Support.fit(String.valueOf(transaction.transactionAmount), data.paymentAmountSize)));
+                    println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), Support.fit(transaction.client.fullName, data.clientNameSize), type, Support.fit(Support.dateToString(transaction.date), Support.DATE_LENGTH), Support.fit(String.format("%.2f", transaction.transactionAmount), data.paymentAmountSize)));
                 }
 
                 println(desc.toString());
@@ -257,9 +257,10 @@ class SimpleUI {
                 }
                 break;
             case "readc":
-                if (!data.loadStore((String) args[1], false)) {
+                if (!data.loadStore((String) args[1], false))
                     println("Invalid file name!");
-                }
+                else
+                    loadData();
                 break;
             case "savebs": {
                 String storeName = (String) args[1];
@@ -300,6 +301,12 @@ class SimpleUI {
             String command = (String) args[0];
             // Check for program exit
             if (command.equals("quit")) {
+                print("If you want to save your changes, type a filename, otherwise press enter. ");
+                line = readLine();
+                if (!line.equals("")) {
+                    data.saveStore(line);
+                    println("Store saved as " + line);
+                }
                 print("Goodbye!"); 
                 return;
             }

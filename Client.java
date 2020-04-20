@@ -33,7 +33,7 @@ public class Client {
     }
 
     void addPayment(Payment p) {
-        outstandingAmount -= p.amount;
+        outstandingAmount -= p.transactionAmount;
         payments.add(p);
     }
 

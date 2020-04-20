@@ -20,6 +20,7 @@ class DataManager {
     int clientNameSize = 5;
 
     int orderNumberSize = 3;
+    int orderAmountSize = 5;
     
     int brandSize = 5;
     int tierSize = 4;
@@ -101,7 +102,8 @@ class DataManager {
     void addOrder(Client client, Order order) {
         client.addOrder(order);
         orders.put(order.ID, order);
-        orderNumberSize = Math.max(orderNumberSize, order.ID);
+        orderNumberSize = Math.max(orderNumberSize, getDigits(order.ID));
+        orderAmountSize = Math.max(orderAmountSize, getDigits((int) order.transactionAmount) + 3);
     }
 
     void addClient(Client client) {
@@ -114,14 +116,14 @@ class DataManager {
         client.addPayment(payment);
         payments.put(payment.ID, payment);
         paymentNumberSize = Math.max(paymentNumberSize, getDigits(payment.ID));
-        paymentAmountSize = Math.max(paymentAmountSize, getDigits((int) payment.amount));
+        paymentAmountSize = Math.max(paymentAmountSize, getDigits((int) payment.transactionAmount) + 3);
     }
 
     void addRepairPrice(RepairPrice rp) {
         Prices.addRepairPrice(rp);
         brandSize = Math.max(brandSize, rp.brand.length());
         tierSize = Math.max(tierSize, rp.tier.length());
-        repairPriceSize = Math.max(repairPriceSize, getDigits((int) rp.price));
+        repairPriceSize = Math.max(repairPriceSize, getDigits((int) rp.price) + 3);
     }
 
     Order getOrder(int orderId) {

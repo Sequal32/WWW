@@ -5,12 +5,10 @@ import java.util.Date;
 public class Payment extends Transaction {
     static int currentPaymentNumber;
 
-    double amount;
-
     public Payment(Client client, Date paymentDate, double amount) {
         this.ID = ++currentPaymentNumber;
         this.client = client;
-        this.amount = amount;
+        this.transactionAmount = amount;
         this.date = paymentDate;
     }
 

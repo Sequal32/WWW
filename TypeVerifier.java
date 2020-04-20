@@ -37,11 +37,16 @@ public class TypeVerifier {
         Object[] output = new Object[args.length];
         output[0] = args[0];
 
-        for (int i = 0; i < types.length; i++) {
-            String val = args[i + 1];
+        for (int i = 1; i < args.length; i++) {
+            String val = args[i];
             Object parsed = "";
 
-            switch (types[i]) {
+            if (i - 1 >= types.length) {
+                output[i] = val;
+                continue;
+            }
+
+            switch (types[i - 1]) {
                 case String:
                     parsed = val;
                     break;
@@ -86,12 +91,14 @@ public class TypeVerifier {
                     if (parsed == null) 
                         Support.setErrorMessage("Order does not exist in the database!");
                     break;
+                default:
+                    parsed = val;
             }
 
             if (Support.wasError())
                 return null;
 
-            output[i + 1] = parsed;
+            output[i] = parsed;
         }
         return output;
     }

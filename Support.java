@@ -19,7 +19,7 @@ public class Support {
     static SimpleDateFormat dateFormat = new SimpleDateFormat("MMddyyyy");
     static SimpleDateFormat readableDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    static final int DATE_LENGTH = 10;
+    static final int DATE_LENGTH = readableDateFormat.toPattern().length();
 
     public static Date getDate(String s) {
         try {
