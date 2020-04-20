@@ -4,11 +4,11 @@ import java.util.Date;
 
 public class Transaction {
     int ID;
-    double transactionAmount;
+    float transactionAmount;
     Date date;
     Client client;
 
     Date getDate() {return date;}
-    double getAmount() {return transactionAmount;}
+    float getAmount() {return transactionAmount;}
     void changeId(int newId) {ID = newId;}
 }

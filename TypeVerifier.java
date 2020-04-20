@@ -1,7 +1,6 @@
 package app;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class TypeVerifier {
     SimpleDateFormat dateFormat = new SimpleDateFormat("MMddyy");
@@ -21,9 +20,9 @@ public class TypeVerifier {
         }
     }
 
-    Double getDouble(String s) {
+    Float getFloat(String s) {
         try {
-            return Double.parseDouble(s);
+            return Float.parseFloat(s);
         }
         catch (Exception e) {
             return null;
@@ -55,8 +54,8 @@ public class TypeVerifier {
                     if (parsed == null)
                         Support.setErrorMessage(String.format("%s is invalid, integer expected", val));
                     break;
-                case Double:
-                    parsed = getDouble(val);
+                case Float:
+                    parsed = getFloat(val);
                     if (parsed == null)
                         Support.setErrorMessage(String.format("%s is invalid, number expected", val));
                     break;

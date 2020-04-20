@@ -30,16 +30,15 @@ class SimpleUI {
             "readc filename - Read Commands From Disk File",
             "savebs filename - Save Bike Shop as a file of commands in file filename",
             "restorebs filename - Restore a previously saved Bike Shop from file filename");
-    // Types are as follows - 0: String, 1: Int, 2: Float, 3: Brand, 4: Tier, 5:
     Map<String, Types[]> typeLookup = new HashMap<String, Types[]>();
     // used for rnon and rncn
     Integer nextModifier;
 
     SimpleUI() {
-        typeLookup.put("addrp", new Types[] { Types.String, Types.String, Types.Double, Types.Int });
+        typeLookup.put("addrp", new Types[] { Types.String, Types.String, Types.Float, Types.Int });
         typeLookup.put("addc", new Types[] { Types.String, Types.String });
         typeLookup.put("addo", new Types[] { Types.Client, Types.Date, Types.Brand, Types.Tier });
-        typeLookup.put("addp", new Types[] { Types.Client, Types.Date, Types.Double });
+        typeLookup.put("addp", new Types[] { Types.Client, Types.Date, Types.Float });
         typeLookup.put("comp", new Types[] { Types.Order, Types.Date });
         typeLookup.put("savebs", new Types[] { Types.String });
         typeLookup.put("restorebs", new Types[] { Types.String });
@@ -66,16 +65,6 @@ class SimpleUI {
 
     private String readLine() {
         return System.console().readLine();
-    }
-
-    private void printClients(Collection<Client> clients) {
-        final int maxSizeNumber = Math.max((int) (Math.log10(Client.currentClientNumber) + 1), 2);
-
-        println(String.format("%s\t%s", Support.fit("ID", maxSizeNumber), "Name"));
-
-        for (Client client : clients) {
-            println(String.format("%s\t%s", Support.fit(String.valueOf(client.clientNumber), maxSizeNumber), client.fullName));
-        }
     }
 
     private Object[] getTypes(Object[] args) {
@@ -128,13 +117,52 @@ class SimpleUI {
         println(desc.toString());
     }
 
+    private void printClients(Collection<Client> clients) {
+        final int maxSizeNumber = Math.max((int) (Math.log10(Client.currentClientNumber) + 1), 2);
+
+        println(String.format("%s\t%s", Support.fit("ID", maxSizeNumber), "Name"));
+
+        for (Client client : clients) {
+            println(String.format("%s\t%s", Support.fit(String.valueOf(client.clientNumber), maxSizeNumber), client.fullName));
+        }
+    }
+
+    private void printPayments(Collection<Payment> payments) {
+        println(String.format("%s\t%s\t%s\tdate", Support.fit("ID", data.paymentNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("AMOUNT", data.paymentAmountSize)));
+
+        for (Payment p : payments) {
+            println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.ID), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.transactionAmount), data.paymentAmountSize), Support.fit(Support.dateToString(p.date), Support.DATE_LENGTH)));
+        }
+    }
+
+    private void printOrders(Collection<Order> orders) {
+        println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize)));
+
+        for (Order o : orders) {
+            println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), o.comment == null ? "" : o.comment));
+        }
+    }
+
+    private void printTransactions(Collection<Transaction> transactions) {
+        println(String.format("%s\t%s\t%s\t%s\tAMOUNT", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("TYPE", 7), Support.fit("DATE", Support.DATE_LENGTH)));
+
+        for (Transaction transaction : data.getTransactionsByDate()) {
+            String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
+            println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), Support.fit(transaction.client.fullName, data.clientNameSize), type, Support.fit(Support.dateToString(transaction.date), Support.DATE_LENGTH), Support.fit(String.format("%.2f", transaction.transactionAmount), data.paymentAmountSize)));
+        }
+    }
+
+    private void lookupClient() {
+
+    }
+
     private boolean executeCmd(Object[] args) {
         switch ((String) args[0]) {
             case "help":
                 println(helpString);
                 break;
             case "addrp":
-                data.addRepairPrice(new RepairPrice((String) args[1], (String) args[2], (double) args[3], (int) args[4]));
+                data.addRepairPrice(new RepairPrice((String) args[1], (String) args[2], (float) args[3], (int) args[4]));
                 println(String.format("Added %s as a new repair price!", args[1]));
                 break;
             case "addc":
@@ -176,7 +204,7 @@ class SimpleUI {
                 break;
             case "addp": {
                 Client client = (Client) args[1];
-                Payment newPayment = new Payment(client, (Date) args[2], (double) args[3]);
+                Payment newPayment = new Payment(client, (Date) args[2], (float) args[3]);
                 data.addPayment(client, newPayment);
                 println(String.format("Added a $%.2f payment (ID: %d) for %s %s (ID: %d)", args[3],
                         newPayment.ID, client.firstName, client.lastName, client.clientNumber));
@@ -191,14 +219,8 @@ class SimpleUI {
                 break;
             case "printo": {
                 if (data.orders.size() == 0) {println("No orders found."); break;}
-
-                Collection<Order> orders = data.getOrdersByDate();
-
-                println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize)));
-
-                for (Order o : orders) {
-                    println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), o.comment == null ? "" : o.comment));                }
-                }
+                printOrders(data.getOrdersByDate());
+            }
                 break;
             case "printcname":
                 if (data.clients.size() == 0) {println("No clients found."); break;}
@@ -220,35 +242,24 @@ class SimpleUI {
             }
             case "printp": {
                     if (data.payments.size() == 0) {println("No payments found."); break;}
-
-                    println(String.format("%s\t%s\t%s\tdate", Support.fit("ID", data.paymentNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("AMOUNT", data.paymentAmountSize)));
-
-                    for (Payment p : data.getAllPayments()) {
-                        println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(p.ID), data.paymentNumberSize), Support.fit(String.valueOf(p.client.clientNumber), data.clientNumberSize), Support.fit(String.format("%.2f", p.transactionAmount), data.paymentAmountSize), Support.fit(Support.dateToString(p.date), Support.DATE_LENGTH)));
-                    }
+                    printPayments(data.getAllPayments());
                 }
 
                 break;
             case "printt": {
-                StringBuilder desc = new StringBuilder();
-                println(String.format("%s\t%s\t%s\t%s\tAMOUNT", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("TYPE", 7), Support.fit("DATE", Support.DATE_LENGTH)));
-
-                for (Transaction transaction : data.getTransactionsByDate()) {
-                    String type = transaction instanceof Order ? "ORDER" : "PAYMENT";
-                    println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(transaction.client.clientNumber), data.clientNumberSize), Support.fit(transaction.client.fullName, data.clientNameSize), type, Support.fit(Support.dateToString(transaction.date), Support.DATE_LENGTH), Support.fit(String.format("%.2f", transaction.transactionAmount), data.paymentAmountSize)));
-                }
-
-                println(desc.toString());
+                printTransactions(data.getTransactionsByDate());
             }
-                break;
+            break;
             case "printr": {
-                println(String.format("%s\t%s\t%s\tLAST PAYMENT DATE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("OWED", data.paymentAmountSize)));
+                println(String.format("%s\t%s\t%s\t%s\tLAST PAYMENT DATE", Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.clientNameSize), Support.fit("OWED", data.orderAmountSize), Support.fit("PAID", data.paymentAmountSize)));
 
                 for (Client client : data.getAllClients()) {
                     if (client.outstandingAmount == 0) continue;
                     Payment lastPayment = client.getLastPayment();
-                    println(String.format("%s\t%s\t%s\t%s", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(String.valueOf(client.outstandingAmount), data.paymentAmountSize), Support.fit(lastPayment == null ? "" : Support.dateToString(lastPayment.date), Support.DATE_LENGTH)));
+                    println(String.format("%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(client.clientNumber), data.clientNumberSize), Support.fit(client.fullName, data.clientNameSize), Support.fit(String.valueOf(client.outstandingAmount), data.getDigits((int) client.outstandingAmount) + 3), Support.fit(String.format("%.2f", client.totalPaid), data.getDigits((int) client.totalPaid) + 3), Support.fit(lastPayment == null ? "" : Support.dateToString(lastPayment.date), Support.DATE_LENGTH)));
                 }
+
+                println(String.format("\nTOTAL OWED: %.2f\tTOTAL PAID: %.2f\nNET: %+.2f: ", data.totalOwed, data.totalPaid, data.totalPaid-data.totalOwed));
             }
                 break;
             case "prints":

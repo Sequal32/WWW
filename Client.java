@@ -6,7 +6,8 @@ public class Client {
     static int currentClientNumber = 0;
 
     int clientNumber;
-    double outstandingAmount = 0;
+    float outstandingAmount = 0;
+    float totalPaid = 0;
     String firstName;
     String lastName;
     String fullName;
@@ -34,6 +35,7 @@ public class Client {
 
     void addPayment(Payment p) {
         outstandingAmount -= p.transactionAmount;
+        totalPaid += p.transactionAmount;
         payments.add(p);
     }
 

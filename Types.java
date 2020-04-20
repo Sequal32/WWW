@@ -3,7 +3,7 @@ package app;
 public enum Types {
     String,
     Int, 
-    Double,
+    Float,
     Brand,
     Tier,
     Date,

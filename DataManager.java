@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeSet;
 
 class DataManager {
     ArrayList<String> commandLog = new ArrayList<String>();
@@ -28,6 +27,9 @@ class DataManager {
     
     int paymentNumberSize = 5;
     int paymentAmountSize = 5;
+    // Totals
+    float totalPaid = 0;
+    float totalOwed = 0;
 
     String currentStore;
 
@@ -104,6 +106,7 @@ class DataManager {
         orders.put(order.ID, order);
         orderNumberSize = Math.max(orderNumberSize, getDigits(order.ID));
         orderAmountSize = Math.max(orderAmountSize, getDigits((int) order.transactionAmount) + 3);
+        totalOwed += order.transactionAmount;
     }
 
     void addClient(Client client) {
@@ -117,6 +120,7 @@ class DataManager {
         payments.put(payment.ID, payment);
         paymentNumberSize = Math.max(paymentNumberSize, getDigits(payment.ID));
         paymentAmountSize = Math.max(paymentAmountSize, getDigits((int) payment.transactionAmount) + 3);
+        totalPaid += payment.transactionAmount;
     }
 
     void addRepairPrice(RepairPrice rp) {
