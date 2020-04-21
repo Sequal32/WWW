@@ -18,21 +18,22 @@ class SimpleUI {
             "\nADDING TO THE DATABASE",
             "addrp brand level price days - Add Repair Price", 
             "addc firstName lastName - Add Customer",
-            "addo customerNumber date brand level comment - Add Order", 
-            "addp customerNumber date amount - Add Payment",
+            "addo CID date brand level comment - Add Order", 
+            "addp CID date amount - Add Payment",
             "comp ID completionDate - Mark order ID completed", 
             "\nGETTING INFORMATION",
             "printrp - Print Repair Prices",
-            "printcnum - Print Clients by client Number", 
+            "printcnum - Print Clients by client ID", 
             "printcname - Print Clients by client Name",
             "printo - Print Orders", 
             "printp - Print Payments", 
             "printt - Print Transactions",
             "printr - Print Receivables", 
-            "prints - Print Statements", 
+            "prints - Print Statements",
+            "printcinfo CID - Print orders, payments, transactions, receivables, and statements for the given client.",
             "\nLOOKING UP DATA",
-            "lookupl lastName - Looks up clients by the given lastName",
-            "lookupf firstName - Looks up clients by the given firstName",
+            "lookupcl lastName - Looks up clients by the given lastName",
+            "lookupcf firstName - Looks up clients by the given firstName",
             "geto - Gets an order by a order id",
             "getp - Gets an payment by a payment id",
             "getc - Gets an client by a client id",
@@ -48,23 +49,26 @@ class SimpleUI {
     boolean loading = false;
     String toAdd;
 
+    Date currentDate = Support.getDate("08292015");
+
     SimpleUI() {
-        typeLookup.put("addrp", new Types[] { Types.String, Types.String, Types.Float, Types.Int });
-        typeLookup.put("addc", new Types[] { Types.String, Types.String });
-        typeLookup.put("addo", new Types[] { Types.Client, Types.Date, Types.Brand, Types.Tier });
-        typeLookup.put("addp", new Types[] { Types.Client, Types.Date, Types.Float });
-        typeLookup.put("comp", new Types[] { Types.Order, Types.Date });
-        typeLookup.put("savebs", new Types[] { Types.String });
-        typeLookup.put("restorebs", new Types[] { Types.String });
-        typeLookup.put("rnon", new Types[] { Types.Int });
-        typeLookup.put("rncn", new Types[] { Types.Int });
-        typeLookup.put("rnpn", new Types[] { Types.Int });
-        typeLookup.put("lookupcl", new Types[] { Types.String });
-        typeLookup.put("lookupcf", new Types[] { Types.String });
-        typeLookup.put("geto", new Types[] { Types.String });
-        typeLookup.put("getp", new Types[] { Types.String });
-        typeLookup.put("getc", new Types[] { Types.String });
-        typeLookup.put("printcinfo", new Types[] { Types.Client });
+        typeLookup.put("addrp", 		new Types[] { Types.String, Types.String, Types.Float, Types.Int });
+        typeLookup.put("addc", 			new Types[] { Types.String, Types.String });
+        typeLookup.put("addo", 			new Types[] { Types.Client, Types.Date, Types.Brand, Types.Tier });
+        typeLookup.put("addp", 			new Types[] { Types.Client, Types.Date, Types.Float });
+        typeLookup.put("comp", 			new Types[] { Types.Order, Types.Date });
+        typeLookup.put("savebs", 		new Types[] { Types.String });
+        typeLookup.put("restorebs", 	new Types[] { Types.String });
+        typeLookup.put("readc", 		new Types[] { Types.String });
+        typeLookup.put("rnon",          new Types[] { Types.Int });
+        typeLookup.put("rncn",          new Types[] { Types.Int });
+        typeLookup.put("rnpn",          new Types[] { Types.Int });
+        typeLookup.put("lookupcl",      new Types[] { Types.String });
+        typeLookup.put("lookupcf",      new Types[] { Types.String });
+        typeLookup.put("geto",          new Types[] { Types.String });
+        typeLookup.put("getp",          new Types[] { Types.String });
+        typeLookup.put("getc",          new Types[] { Types.String });
+        typeLookup.put("printcinfo", 	new Types[] { Types.Client });
     }
 
     private void println(String s) {
@@ -172,12 +176,13 @@ class SimpleUI {
     }
 
     private void printOrders(Collection<Order> orders) {
-        println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize), Support.fit("DAYS LEFT", 9)));
+        println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\tCOMMENT", Support.fit("ID", data.orderNumberSize), Support.fit("CID", data.clientNumberSize), Support.fit("NAME", data.tierSize), Support.fit("BRAND", data.brandSize), Support.fit("TIER", data.tierSize), Support.fit("DATE", Support.DATE_LENGTH), Support.fit("COMPLETE", Support.DATE_LENGTH), Support.fit("PRICE", data.paymentAmountSize), Support.fit("DUE IN", 6)));
 
         for (Order o : orders) {
             // Find diff of two dates
-            String daysUntilDue = Support.fit(String.valueOf((int) TimeUnit.DAYS.convert((o.date.getTime()-new Date().getTime()), TimeUnit.MILLISECONDS)), Support.DATE_LENGTH);
-            println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), Support.fit(o.completionDate == null ? daysUntilDue : "", 9), o.comment == null ? "" : o.comment));
+            // String daysUntilDue = Support.fit(String.valueOf((int) TimeUnit.DAYS.convert((o.date.getTime()-new Date().getTime()), TimeUnit.MILLISECONDS) + o.repairPrice.daysRequired), Support.DATE_LENGTH);
+            String daysUntilDue = Support.fit(String.valueOf((int) TimeUnit.DAYS.convert((o.date.getTime()-currentDate.getTime()), TimeUnit.MILLISECONDS) + o.repairPrice.daysRequired), Support.DATE_LENGTH);
+            println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s", Support.fit(String.valueOf(o.ID), data.orderNumberSize), Support.fit(String.valueOf(o.client.clientNumber), data.clientNumberSize), Support.fit(o.client.fullName, data.clientNameSize), Support.fit(o.brand, data.brandSize), Support.fit(o.tier, data.tierSize), Support.fit(Support.dateToString(o.date), Support.DATE_LENGTH), Support.fit(o.completionDate == null ? "" : Support.dateToString(o.completionDate), Support.DATE_LENGTH), Support.fit(String.format("%.2f", o.transactionAmount), data.paymentAmountSize), Support.fit(o.completionDate == null ? daysUntilDue : "", 9), o.comment == null ? "" : o.comment));
         }
     }
 
@@ -284,7 +289,7 @@ class SimpleUI {
 
                 println(String.format("%s\t%s\tprice", Support.fit("BRANDS", data.brandSize), Support.fit("TIER", data.tierSize)));
 
-                for (RepairPrice rp : Prices.rps) {
+                for (RepairPrice rp : Prices.getRepairPrices()) {
                     println(String.format("%s\t%s\t%.2f", Support.fit(rp.brand, data.brandSize), Support.fit(rp.tier, data.tierSize), rp.price));
                 }
                 break;
@@ -356,6 +361,12 @@ class SimpleUI {
                 if (!data.loadStore((String) args[1], true))
                     println("Invalid shop name!");
                 else
+                    Order.currentOrderNumber = 0;
+                    Payment.currentPaymentNumber = 0;
+                    Client.currentClientNumber = 0;
+                    nextOrderModifier = null;
+                    nextPaymentModifier = null;
+                    nextClientModifier = null;
                     loadData();
                 break;  
             case "rnon":

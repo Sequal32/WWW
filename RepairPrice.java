@@ -15,4 +15,8 @@ public class RepairPrice {
         this.price = price;
         this.daysRequired = daysRequired;
     }
+
+    public String getBrand() {
+        return brand;
+    }
 }

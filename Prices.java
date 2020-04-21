@@ -1,6 +1,7 @@
 package app;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 /**
  * Prices
@@ -42,5 +43,10 @@ public class Prices {
 
     static boolean tierExists(String tier) {
         return tiers.contains(tier);
+    }
+
+    static ArrayList<RepairPrice> getRepairPrices() {
+        rps.sort(Comparator.comparing(RepairPrice::getBrand));
+        return rps;
     }
 }

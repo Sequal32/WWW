@@ -15,21 +15,21 @@ class DataManager {
     HashMap<Integer, Payment> payments;
 
     // String sizes for support fit - all to initially fit headings
-    int clientNumberSize = 3;
-    int clientNameSize = 5;
+    int clientNumberSize;
+    int clientNameSize;
 
-    int orderNumberSize = 3;
-    int orderAmountSize = 5;
+    int orderNumberSize;
+    int orderAmountSize;
     
-    int brandSize = 5;
-    int tierSize = 4;
-    int repairPriceSize = 4;
+    int brandSize;
+    int tierSize;
+    int repairPriceSize;
     
-    int paymentNumberSize = 5;
-    int paymentAmountSize = 5;
+    int paymentNumberSize;
+    int paymentAmountSize;
     // Totals
-    float totalPaid = 0;
-    float totalOwed = 0;
+    float totalPaid;
+    float totalOwed;
 
     String currentStore;
 
@@ -41,6 +41,21 @@ class DataManager {
         clients = new HashMap<Integer, Client>();
         orders = new HashMap<Integer, Order>();
         payments = new HashMap<Integer, Payment>();
+        clientNumberSize = 3;
+        clientNameSize = 5;
+
+        orderNumberSize = 3;
+        orderAmountSize = 5;
+        
+        brandSize = 5;
+        tierSize = 4;
+        repairPriceSize = 4;
+        
+        paymentNumberSize = 5;
+        paymentAmountSize = 5;
+        // Totals
+        totalPaid = 0;
+        totalOwed = 0;
     }
 
     private String prepareName(String s) {
